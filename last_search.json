@@ -1,0 +1,41 @@
+{
+  "body": {
+    "pickupDate": "2026-03-31T01:30:00.000Z",
+    "dropOffDate": "2026-03-31T18:30:00.000Z",
+    "pickUpDistrict": "Kottayam",
+    "pickUpLocation": "ettumanoor : skoda service"
+  },
+  "total": 4,
+  "filtered": 1,
+  "available": [
+    {
+      "_id": "69cb77bf946fa390d8b6496a",
+      "registeration_number": "KL-05-AB-1234",
+      "car_title": "Sporty Premium SUV",
+      "car_description": "Great for weekend getaways.",
+      "company": "Skoda",
+      "name": "Kushaq MT",
+      "model": "SKODA KUSHAQ Petrol MT",
+      "year_made": 2022,
+      "fuel_type": "petrol",
+      "rating": [],
+      "seats": 5,
+      "transmition": "manual",
+      "image": [
+        "https://res.cloudinary.com/demo/image/upload/v1312461204/sample.jpg"
+      ],
+      "price": 4000,
+      "base_package": "24",
+      "car_type": "suv",
+      "isDeleted": "false",
+      "location": "ettumanoor : skoda service",
+      "district": "Kottayam",
+      "isBooked": false,
+      "isAdminAdded": true,
+      "addedBy": "admin",
+      "isAdminApproved": true,
+      "isRejected": false,
+      "__v": 0
+    }
+  ]
+}
