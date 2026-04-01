@@ -1,4 +1,4 @@
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import Home from "./pages/user/Home";
 import SignUp from "./pages/user/SignUp";
 import SignIn from "./pages/user/SignIn";
@@ -35,9 +35,11 @@ import CarNotFound from "./pages/user/CarNotFound";
 function App() {
   return (
     <>
-      <BrowserRouter>
+      <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
         {/* <ThemeProvider theme={theme}> */}
         <Routes>
+          {/* Redirect /adminHome to the actual nested dashboard path */}
+          <Route path="/adminHome" element={<Navigate to="/adminDashboard/adminHome" replace />} />
           {/* if user enter wrong url show this page */}
           <Route path="*" element={<CarNotFound />} />
           {/* components with Navbar */}

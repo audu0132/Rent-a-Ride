@@ -63,7 +63,7 @@ function SignIn() {
   const dispatch = useDispatch();
 
   const onSubmit = async (formData, e) => {
-    const BASE_URL = import.meta.env.VITE_PRODUCTION_BACKEND_URL;
+    const BASE_URL = import.meta.env.MODE === "development" ? "" : import.meta.env.VITE_PRODUCTION_BACKEND_URL;
     e.preventDefault();
     try {
       dispatch(signInStart());
@@ -93,14 +93,18 @@ function SignIn() {
         dispatch(signInSuccess(data));
         dispatch(loadingEnd());
         navigate("/adminDashboard");
+        return;
       } else if (data.isUser) {
         dispatch(signInSuccess(data));
         dispatch(loadingEnd());
         navigate("/");
+        return;
       } else {
         dispatch(loadingEnd());
         dispatch(signInFailure(data));
+        return;
       }
+      // Below should only execute if nothing matched, but we handled all branches
       dispatch(loadingEnd());
       dispatch(signInFailure("something went wrong"));
     } catch (error) {
