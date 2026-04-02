@@ -1,67 +1,54 @@
+import { motion } from "framer-motion";
+import { BsGithub, BsInstagram, BsLinkedin, BsTwitter } from "react-icons/bs";
 
-import {
-    FooterCopyright,
-    FooterIcon,
-    FooterLink,
-    FooterLinkGroup,
-    FooterTitle,
-  } from "flowbite-react";
-  import {  BsGithub, BsInstagram, BsLinkedin, BsTwitter } from "react-icons/bs";
+const socials = [
+  { href: "https://www.linkedin.com/in/jeevan-joji-25b799275/", icon: BsLinkedin, label: "LinkedIn" },
+  { href: "https://github.com/jeevan-aj", icon: BsGithub, label: "GitHub" },
+  { href: "#", icon: BsInstagram, label: "Instagram" },
+  { href: "#", icon: BsTwitter, label: "Twitter" },
+];
 
-
- 
-  
-  const Footers  = () =>  {
-    
-    return (
-      <div  className="bg-black text-white lg:pt-[100px] pb-[100px] p-10 rounded-none mt-[100px] lg:mt-[200px]" >
-        <div className="w-full">
-          <div className="grid  w-full justify-between lg:px-10 sm:flex sm:justify-between md:flex md:grid-cols-1 gap-y-10 pb-10">
-            <div>
-              <div className="py-2 mb-5 font-bold text-[18px] lg:text-[24px]"><h1>Rent a Ride</h1></div>
-                
-               
-            </div>
-            <div className="grid grid-cols-2 gap-8 sm:mt-4 sm:grid-cols-3 sm:gap-6 ">
-              <div>
-                <FooterTitle title="about" className="text-justify" />
-                <FooterLinkGroup col>
-                  <FooterLink href="#">Rent a Ride</FooterLink>
-                  <FooterLink href="#">Car rental </FooterLink>
-                </FooterLinkGroup>
-              </div>
-              <div>
-                <FooterTitle title="Follow us" className="text-justify" />
-                <FooterLinkGroup col>
-                  <FooterLink href="https://github.com/jeevan-aj">Github</FooterLink>
-                  <FooterLink href="#">Discord</FooterLink>
-                </FooterLinkGroup>
-              </div>
-              <div>
-                <FooterTitle title="Legal" className="text-justify" />
-                <FooterLinkGroup col>
-                  <FooterLink href="#">Privacy Policy</FooterLink>
-                  <FooterLink href="#">Terms &amp; Conditions</FooterLink>
-                </FooterLinkGroup>
-              </div>
-            </div>
+const Footers = () => {
+  return (
+    <footer className="mx-auto mt-24 w-[95%] max-w-7xl pb-10">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true }}
+        className="rounded-3xl border border-white/20 bg-slate-950 px-8 py-12 text-white shadow-[0_30px_90px_rgba(2,6,23,0.5)]"
+      >
+        <div className="grid gap-10 md:grid-cols-4">
+          <div>
+            <h3 className="text-2xl font-bold">Rent a Ride</h3>
+            <p className="mt-3 text-sm text-slate-300">Premium rental experience with flexible pickups and modern comfort.</p>
           </div>
-          <hr className="pt-10 lg:m-10 lg:px-10" />
-          <div className="w-full sm:flex sm:items-center sm:justify-between lg:px-10 ">
-            <FooterCopyright href="#" by="Rent a Ride" year={2024} />
-            <div className="mt-4 flex space-x-6 sm:mt-0 sm:justify-center">
-              <FooterIcon href="https://www.linkedin.com/in/jeevan-joji-25b799275/" icon={BsLinkedin} />
-              <FooterIcon href="https://github.com/jeevan-aj" icon={BsGithub} />
-              <FooterIcon href="#" icon={BsInstagram} />
-              <FooterIcon href="#" icon={BsTwitter} />
-             
-             
+          <div>
+            <h4 className="mb-3 text-xs uppercase tracking-[0.2em] text-slate-400">Product</h4>
+            <ul className="space-y-2 text-sm text-slate-200">
+              <li>Vehicles</li><li>Enterprise</li><li>Bookings</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="mb-3 text-xs uppercase tracking-[0.2em] text-slate-400">Company</h4>
+            <ul className="space-y-2 text-sm text-slate-200">
+              <li>About</li><li>Privacy</li><li>Terms</li>
+            </ul>
+          </div>
+          <div>
+            <h4 className="mb-3 text-xs uppercase tracking-[0.2em] text-slate-400">Social</h4>
+            <div className="flex gap-3">
+              {socials.map(({ href, icon: Icon, label }) => (
+                <a key={label} href={href} aria-label={label} className="rounded-xl border border-white/20 p-3 text-slate-200 transition hover:-translate-y-1 hover:bg-white/10 hover:text-white">
+                  <Icon />
+                </a>
+              ))}
             </div>
           </div>
         </div>
-      </div>
-    );
-  }
-  
+        <div className="mt-10 border-t border-white/10 pt-6 text-xs text-slate-400">© {new Date().getFullYear()} Rent a Ride. All rights reserved.</div>
+      </motion.div>
+    </footer>
+  );
+};
 
-  export default Footers
+export default Footers;

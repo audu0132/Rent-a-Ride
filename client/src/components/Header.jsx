@@ -1,191 +1,114 @@
-import styles from "../index";
 import { navLinks } from "../constants";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { RxHamburgerMenu } from "react-icons/rx";
-import { MdMenuOpen } from "react-icons/md";
 import { useState } from "react";
-import { Drawer } from "antd";
-
+import { Menu, X, Sparkles } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import PremiumButton from "./ui/PremiumButton";
 
 function Header() {
   const { currentUser } = useSelector((state) => state.user);
   const [nav, setNav] = useState(false);
+  const { pathname } = useLocation();
 
   return (
-    <div
-      className={`w-full   flex justify-between items-center px-6 sm:px-12 md:px-18 lg:py-6 lg:px-28 pt-10 mt-5 md:mt-10 sm:max-w-[900px] lg:max-w-[1500px] mx-auto `}
-    >
-      <Link to="/">
-        <div
-          className={` text-[16px] md:text-[18px] lg:text-[20px] font-poppins font-bold`}
-        >
-          Rent a Ride
-        </div>
-      </Link>
-
-      <div className="hidden lg:block">
-        <ul className="flex list-none">
-          {navLinks.map((navlink, index) => (
-            <li
-              key={index}
-              className={`${index != navLinks.length - 1 ? "mx-4" : "mx-0"}`}
-            >
-              <Link
-                to={navlink.path}
-                className={`text-black  font-poppins cursor-pointer font-semibold`}
-              >
-                {navlink.title}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="flex gap-2">
-        <div className="hidden md:inline-flex">
-          <Link to={"/signIn"}>
-            {currentUser && !currentUser.isAdmin && !currentUser.isVendor ? (
-              ""
-            ) : (
-              <button
-                id="signin"
-                className={`border-[1px] hidden lg:inline-flex border-green-500 py-1 text-[12px] md:text-[14px] sm:py-[7px] px-2 sm:px-4 font-normal sm:font-semibold rounded-md `}
-              >
-                Sign In
-              </button>
-            )}
+    <header className="sticky top-4 z-50 mx-auto w-[95%] max-w-7xl">
+      <div className="rounded-2xl border border-white/25 bg-white/70 px-4 py-3 shadow-[0_20px_60px_rgba(15,23,42,0.15)] backdrop-blur-xl md:px-6">
+        <div className="flex items-center justify-between gap-4">
+          <Link to="/" className="flex items-center gap-2 text-slate-900">
+            <Sparkles className="h-5 w-5 text-cyan-500" />
+            <span className="text-lg font-bold tracking-tight md:text-xl">Rent a Ride</span>
           </Link>
-        </div>
-        <div className="hidden lg:flex items-center justify-center">
-          {currentUser && !currentUser.isAdmin && !currentUser.isVendor ? (
-            <Link to={"/profile"}>
-              <img
-                src={`${currentUser.profilePicture}`}
-                alt="fsd"
-                referrerPolicy="no-referrer"
-                className="h-10 w-10 rounded-[50%] object-cover"
-              />
-            </Link>
-          ) : (
-            <div className="hidden lg:inline-flex">
-              <Link to={"/signup"}>
-                <button id="signup" className={`${styles.button} `}>
-                  Sign Up
-                </button>
-              </Link>
-            </div>
-          )}
-        </div>
 
-
-        {/*  Mobile Menu */}
-        <div className="relative lg:hidden flex justify-center items-center">
-          <button onClick={() => setNav(!nav)}>
-            <div>{nav ? <MdMenuOpen /> : <RxHamburgerMenu />}</div>
-          </button>
-          <Drawer
-            destroyOnClose={true}
-            onClose={() => setNav(false)}
-            open={nav}
-          >
-            <div className="flex flex-col items-start justify-between gap-y-10">
-              {navLinks.map((navlink, index) => (
-            
+          <nav className="hidden lg:block">
+            <ul className="flex items-center gap-2 rounded-xl bg-slate-900/5 p-1">
+              {navLinks.map((item) => (
+                <li key={item.id}>
                   <Link
-                    key={index}
-                    to={navlink.path}
-                    className="text-[26px]"
-                    onClick={() => setNav(false)}
+                    to={item.path}
+                    className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                      pathname === item.path
+                        ? "bg-white text-slate-900 shadow"
+                        : "text-slate-600 hover:text-slate-950"
+                    }`}
                   >
-                    {navlink.title}
+                    {item.title}
                   </Link>
-              
+                </li>
               ))}
+            </ul>
+          </nav>
 
-              {currentUser && !currentUser.isAdmin && !currentUser.isVendor && (
-                <div>
-                  <Link to={"/profile"}>
-                    <div id="signup" className={` rounded-md font-semibold text-[24px]`}>
-                      Profile
-                    </div>
+          <div className="hidden items-center gap-3 lg:flex">
+            {currentUser && !currentUser.isAdmin && !currentUser.isVendor ? (
+              <Link to="/profile" className="rounded-full ring-2 ring-cyan-300/70">
+                <img
+                  src={currentUser.profilePicture}
+                  alt="Profile"
+                  referrerPolicy="no-referrer"
+                  className="h-10 w-10 rounded-full object-cover"
+                />
+              </Link>
+            ) : (
+              <>
+                <Link to="/signin">
+                  <PremiumButton variant="secondary" className="px-4 py-2 text-xs text-slate-900">
+                    Sign In
+                  </PremiumButton>
+                </Link>
+                <Link to="/signup">
+                  <PremiumButton className="px-4 py-2 text-xs">Create account</PremiumButton>
+                </Link>
+              </>
+            )}
+          </div>
+
+          <button
+            className="rounded-xl border border-slate-200 p-2 text-slate-700 lg:hidden"
+            onClick={() => setNav((prev) => !prev)}
+            aria-label="Open menu"
+          >
+            {nav ? <X size={20} /> : <Menu size={20} />}
+          </button>
+        </div>
+      </div>
+
+      <AnimatePresence>
+        {nav && (
+          <motion.div
+            initial={{ opacity: 0, y: -12 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -12 }}
+            className="mt-2 rounded-2xl border border-white/25 bg-slate-950/90 p-4 text-white shadow-2xl backdrop-blur"
+          >
+            <div className="flex flex-col gap-2">
+              {navLinks.map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  onClick={() => setNav(false)}
+                  className="rounded-lg px-3 py-2 text-sm font-medium hover:bg-white/10"
+                >
+                  {item.title}
+                </Link>
+              ))}
+              {!currentUser && (
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <Link to="/signin" onClick={() => setNav(false)}>
+                    <PremiumButton variant="secondary" className="w-full text-xs">
+                      Sign In
+                    </PremiumButton>
+                  </Link>
+                  <Link to="/signup" onClick={() => setNav(false)}>
+                    <PremiumButton className="w-full text-xs">Sign Up</PremiumButton>
                   </Link>
                 </div>
               )}
-
-              <div>
-                <Link to={"/signIn"}>
-                  {currentUser &&
-                  !currentUser.isAdmin &&
-                  !currentUser.isVendor ? (
-                    ""
-                  ) : (
-                    <button
-                      id="signin"
-                      className={` rounded-md  text-[24px] font-semibold  `}
-                    >
-                      Sign In
-                    </button>
-                  )}
-                </Link>
-              </div>
-
-              <div>
-                {currentUser &&
-                !currentUser.isAdmin &&
-                !currentUser.isVendor ? (
-                  ""
-                ) : (
-                  <div>
-                    <Link to={"/signup"}>
-                      <button
-                        id="signup"
-                        className=" rounded-md  text-[24px] font-semibold "
-                      >
-                        Sign Up
-                      </button>
-                    </Link>
-                  </div>
-                )}
-              </div>
             </div>
-          </Drawer>
-          {nav && (
-            <div>
-              <div className="absolute top-6 z-10 right-0  ">
-                <Link to={"/signIn"}>
-                  {currentUser &&
-                  !currentUser.isAdmin &&
-                  !currentUser.isVendor ? (
-                    ""
-                  ) : (
-                    <button
-                      id="signin"
-                      className={`border-[1px] w-[80px]  border-green-500 bg-green-500  py-1 text-[10px]   px-2  font-normal sm:font-semibold  `}
-                    >
-                      Sign In
-                    </button>
-                  )}
-                </Link>
-              </div>
-
-              <div>
-                {currentUser &&
-                  !currentUser.isAdmin &&
-                  !currentUser.isVendor && (
-                    <div className="hidden lg:inline-flex">
-                      <Link to={"/signup"}>
-                        <button id="signup" className={`${styles.button} `}>
-                          Sign Up
-                        </button>
-                      </Link>
-                    </div>
-                  )}
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </header>
   );
 }
 
