@@ -4,7 +4,7 @@ import SignUp from "./pages/user/SignUp";
 import SignIn from "./pages/user/SignIn";
 import Vehicles from "./pages/user/Vehicles";
 import Profile from "./pages/user/Profile";
-import With_nav from "./components/Layout/WithNav";
+import WithNav from "./components/Layout/WithNav";
 import PrivateRoute from "./components/PrivateRoute";
 import { PrivateSignin } from "./components/PrivateRoute";
 
@@ -43,7 +43,7 @@ function App() {
           {/* if user enter wrong url show this page */}
           <Route path="*" element={<CarNotFound />} />
           {/* components with Navbar */}
-          <Route element={<With_nav />}>
+          <Route element={<WithNav />}>
             <Route path="/" element={<Home />} />
             <Route path="/vehicles" element={<Vehicles />} />
             <Route path="/enterprise" element={<Enterprise />} />

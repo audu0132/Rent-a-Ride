@@ -1,112 +1,85 @@
-import styles from "../../index";
+import { useRef } from "react";
 import Herocar from "../../Assets/homepage_car_copy.jpeg";
 import CarSearch from "./CarSearch";
 import { HeroParallax } from "../../components/ui/Paralax";
-import { useRef } from "react";
-
-import Swal from "sweetalert2";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { setIsSweetAlert } from "../../redux/user/userSlice";
 import Footers from "../../components/Footer";
+import { motion } from "framer-motion";
+import { Car, ShieldCheck, Sparkle } from "lucide-react";
+import PremiumButton from "../../components/ui/PremiumButton";
+import { toast } from "sonner";
 
+const highlights = [
+  { title: "Curated Fleet", text: "Modern, clean and verified vehicles with transparent pricing.", icon: Car },
+  { title: "Safety First", text: "Verified vendors, support coverage and peace-of-mind protection.", icon: ShieldCheck },
+  { title: "Premium UX", text: "Fast booking flow with beautiful interactions across every device.", icon: Sparkle },
+];
 
 function Home() {
   const ref = useRef(null);
   const { isSweetAlert } = useSelector((state) => state.user);
   const dispatch = useDispatch();
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
-  const sweetalert = () => {
-    Swal.fire({
-      
-      show: true,
-      title: "",
-      text: "Vehicle Booked Successfully",
-      icon: "success",
-      showDenyButton: true,
-      confirmButtonText: "Go to Home",
-      confirmButtonColor:"#22c55e",
-      denyButtonColor:'black',
-      denyButtonText: `See Orders`,
-    }).then((result) => {
-      if (result.isConfirmed) {
-        navigate('/')
-      }
-      else if(result.isDenied){
-        navigate('/profile/orders')
-      }
-    })
-    dispatch(setIsSweetAlert(false))
-  };
+  if (isSweetAlert) {
+    toast.success("Vehicle booked successfully", {
+      action: {
+        label: "Orders",
+        onClick: () => navigate("/profile/orders"),
+      },
+    });
+    dispatch(setIsSweetAlert(false));
+  }
 
   return (
     <>
-      {isSweetAlert && sweetalert()}
-
-      {/* This is div is the container for the dot background */}
-      <div className="relative h-[100vh] w-full mx-auto sm:max-w-[900px] lg:max-w-[1500px] bg-white min-h-[72vh] md:min-h-[60vh] lg:min-h-[73vh]">
-        <div
-          className={`px-12 lg:px-28 absolute top-0   z-10 w-full   justify-between items-center flex flex-col  sm:flex-row mt-[50px] md:mt-[170px] gap-10`}
-        >
-          <div className="">
-            <p className={`py-2 text-[9px] md:text-[12px] ${styles.paragraph}`}>
-              Plan your trip now
-            </p>
-            <h1
-              className={` md:${styles.heading2} font-extrabold text-[35px] leading-10 lg:font-bold  mb-6  lg:text-[58px] lg:mb-6`}
-            >
-              Save <span className="text-green-600">big</span> with our <br />
-              car rental
-            </h1>
-            <p className={`${styles.paragraph} text-justify`}>
-              Rent the car of your dreams. Unbeatable prices, unlimited miles,
-              flexible pick-up options and much more.
-            </p>
-            <div className=" mt-10  lg:mt-[40px] flex gap-3">
-              <button
-                onClick={() => {
-                  ref.current?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                  });
-                }}
-                className="bg-green-500  text-black text-[12px] md:text-[16px] py-3 px-3 rounded-sm font-semibold  lg:py-3 lg:px-5"
-              >
-                Book Ride{" "}
-                <span className="ml-2">
-                  <i className="bi bi-check-circle-fill"></i>
-                </span>
-              </button>
-              <button
-                onClick={() => {
-                  ref.current?.scrollIntoView({
-                    behavior: "smooth",
-                    block: "center",
-                  });
-                }}
-                className="bg-black text-white rounded-sm text-[12px] md:text-[16px]  px-3 py-2 lg:py-3 lg:px-5"
-              >
-                Learn More{" "}
-                <span>
-                  <i className="bi bi-chevron-right"></i>
-                </span>
-              </button>
-            </div>
+      <section className="mx-auto mt-8 grid w-[95%] max-w-7xl gap-10 overflow-hidden rounded-3xl border border-white/40 bg-white/65 p-6 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur-xl lg:grid-cols-2 lg:p-12">
+        <motion.div initial={{ opacity: 0, x: -25 }} animate={{ opacity: 1, x: 0 }} className="flex flex-col justify-center">
+          <p className="mb-4 inline-flex w-fit rounded-full bg-slate-900/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.25em] text-slate-700">Plan your trip</p>
+          <h1 className="text-4xl font-bold leading-tight text-slate-900 lg:text-6xl">
+            Save <span className="bg-gradient-to-r from-emerald-500 to-cyan-500 bg-clip-text text-transparent">big</span> with seamless car rentals
+          </h1>
+          <p className="mt-5 max-w-xl text-sm text-slate-600 md:text-base">
+            Experience premium mobility with intuitive booking, transparent pricing, and beautifully designed interactions.
+          </p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <PremiumButton onClick={() => ref.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>Book Ride</PremiumButton>
+            <PremiumButton variant="secondary" className="text-slate-900" onClick={() => ref.current?.scrollIntoView({ behavior: "smooth", block: "center" })}>Learn More</PremiumButton>
           </div>
-          <div className="object-contain hidden sm:block">
-            <img src={Herocar} alt="" />
-          </div>
-        </div>
-        <div className="absolute h-full w-full bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] [mask-image:radial-gradient(ellipse_50%_50%_at_50%_50%,#000_70%,transparent_100%)]"></div>
-      </div>
+        </motion.div>
 
-      <div ref={ref}>
+        <motion.div initial={{ opacity: 0, x: 25 }} animate={{ opacity: 1, x: 0 }} className="relative">
+          <div className="absolute -inset-8 -z-10 rounded-full bg-cyan-300/25 blur-3xl" />
+          <img src={Herocar} alt="Premium rental car" className="h-full max-h-[460px] w-full rounded-2xl object-cover shadow-2xl" />
+        </motion.div>
+      </section>
+
+      <section className="mx-auto mt-8 grid w-[95%] max-w-7xl gap-4 md:grid-cols-3">
+        {highlights.map((item, index) => (
+          <motion.article
+            key={item.title}
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay: index * 0.08 }}
+            whileHover={{ y: -5 }}
+            className="rounded-2xl border border-white/50 bg-white/80 p-5 backdrop-blur-xl"
+          >
+            <item.icon className="h-6 w-6 text-cyan-500" />
+            <h3 className="mt-4 text-lg font-semibold text-slate-900">{item.title}</h3>
+            <p className="mt-2 text-sm text-slate-600">{item.text}</p>
+          </motion.article>
+        ))}
+      </section>
+
+      <div ref={ref} className="mx-auto w-[95%] max-w-7xl">
         <CarSearch />
       </div>
 
       <HeroParallax />
-      <Footers/>
+      <Footers />
     </>
   );
 }
