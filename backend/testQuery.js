@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 import Vehicle from "./models/vehicleModel.js";
-import Booking from "./models/BookingModel.js";
+
 import dotenv from "dotenv";
 import path from "path";
 import { fileURLToPath } from "url";

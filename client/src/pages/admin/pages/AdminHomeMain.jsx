@@ -1,93 +1,119 @@
+import { motion } from "framer-motion";
+import { HiOutlineArrowTrendingUp, HiOutlineUsers, HiOutlineViewColumns, HiOutlineClock, HiOutlineCurrencyRupee } from "react-icons/hi2";
+import { LineChart } from "../components";
 
-
-import {  LineChart, Button } from "../components";
-
-import { earningData } from "../data/dummys.jsx";
+const StatCard = ({ title, value, icon: Icon, trend, color }) => (
+  <motion.div
+    whileHover={{ y: -5, scale: 1.02 }}
+    className="stat-card"
+  >
+    <div className="flex items-center justify-between">
+      <div className={`flex h-12 w-12 items-center justify-center rounded-2xl bg-${color}-500/10 text-${color}-500 shadow-lg shadow-${color}-500/5`}>
+        <Icon size={24} />
+      </div>
+      {trend && (
+        <div className="flex items-center gap-1 text-xs font-black text-emerald-500 bg-emerald-500/10 px-2 py-1 rounded-full">
+          <HiOutlineArrowTrendingUp size={12} />
+          {trend}
+        </div>
+      )}
+    </div>
+    <div>
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{title}</p>
+      <h3 className="mt-1 text-3xl font-black text-white tracking-tighter">{value}</h3>
+    </div>
+    {/* Decorative background element */}
+    <div className={`absolute -bottom-2 -right-2 h-16 w-16 opacity-5 text-${color}-500`}>
+      <Icon size={64} />
+    </div>
+  </motion.div>
+);
 
 const AdminHomeMain = () => {
+  const stats = [
+    { title: "Total Bookings", value: "1,284", icon: HiOutlineViewColumns, trend: "+12%", color: "blue" },
+    { title: "Active Bookings", value: "432", icon: HiOutlineClock, trend: "+5%", color: "emerald" },
+    { title: "Total Revenue", value: "₹6.3M", icon: HiOutlineCurrencyRupee, trend: "+18%", color: "amber" },
+    { title: "Total Vehicles", value: "85", icon: HiOutlineViewColumns, color: "indigo" },
+    { title: "Personal Requests", value: "12", icon: HiOutlineUsers, trend: "Pending", color: "rose" },
+  ];
+
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    }
+  };
+
   return (
-    <div className="mt-12 ">
-      {/* hero - productsIncome */}
-      <div className="flex flex-wrap lg:flex-nowrap justify-center items-center lg:items-start">
-        <div className=" dark:text-gray-200 dark:bg-secondary-dark-bg h-44 rounded-xl w-full lg:w-80 xl:w-full 2xl:w-80 p-8 pt-9 m-3  bg-hero-pattern bg-no-repeat bg-cover   bg-slate-50 xl:h-[250px] 2xl:h-44">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="font-bold text-gray-400">Earnings</p>
-              <p className="text-2xl text-black">$63,448.78</p>
-            </div>
-          </div>
-
-          <div className="mt-6">
-            <Button
-              color="white"
-              bgColor="blue"
-              text="Download"
-              borderRadius="10px"
-              size="md"
-            />
-          </div>
-        </div>
-
-        <div className="flex m-3 flex-wrap  justify-center xl:justify-start  gap-1 items-center ">
-          {earningData.map((item) => (
-            <div
-              key={item.title}
-              className="bg-slate-50 dark:text-gray-200 dark:bg-secondary-dark-bg md:w-56 p-4 pt9 rounded-2xl 2xl:h-44"
-            >
-              <button
-                type="button"
-                style={{ color: item.iconColor, backgroundColor: item.iconBg }}
-                className="text-2xl opacity-0.9 "
-              >
-                {item.icon}
-              </button>
-              <p className="mt-3">
-                <span className="text-lg font-semibold text-black">
-                  {item.amount}
-                </span>
-                <span className={`text-sm text-${item.pcColor} ml-2`}>
-                  {item.percentage}
-                </span>
-              </p>
-              <p className="text-sm text-gray-400 mt-1">{item.title}</p>
-            </div>
-          ))}
-        </div>
+    <div className="space-y-12">
+      {/* Header Section */}
+      <div className="flex flex-col gap-2">
+        <h1 className="text-4xl font-black text-white tracking-tight">Executive Dashboard</h1>
+        <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Overview for the current fiscal period</p>
       </div>
 
-      {/* graphs */}
+      {/* Stats Grid */}
+      <motion.div 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5"
+      >
+        {stats.map((stat, idx) => (
+          <StatCard key={idx} {...stat} />
+        ))}
+      </motion.div>
 
-      <div className="flex gap-10 m-4 flex-wrap justify-center">
-        <div className="bg-white dark:text-gray-200 dark:bg-secondary-dark-bg p-6 rounded-2xl">
-          <div className="flex justify-between items-center gap-2">
-            <p className="text-xl font-semibold">Recent Transactions</p>
-            {/* <DropDown currentMode={currentMode} /> */}
-          </div>
-          <div className="mt-10 w-72 md:w-400">
-           
-          </div>
-          <div className="flex justify-between items-center mt-5 border-t-1 border-color">
-            <div className="mt-3">
-              <Button
-                color="white"
-                // bgColor={currentColor}
-                text="Add"
-                borderRadius="10px"
-              />
+      {/* Main Insights Grid */}
+      <div className="grid gap-8 lg:grid-cols-3">
+        {/* Sales Overview Chart */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="dashboard-card lg:col-span-2"
+        >
+          <div className="mb-8 flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-black text-white uppercase tracking-tight">Revenue Analytics</h3>
+              <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Growth projection for current year</p>
             </div>
-
-            <p className="text-gray-400 text-sm">36 Recent Transactions</p>
+            <div className="rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-xs font-black text-slate-300">
+              Last 12 Months
+            </div>
           </div>
-        </div>
-        <div className="bg-white dark:text-gray-200 dark:bg-secondary-dark-bg p-6 rounded-2xl w-96 md:w-760">
-          <div className="flex justify-between items-center gap-2 mb-10">
-            <p className="text-xl font-semibold">Sales Overview</p>
-            {/* <DropDown currentMode={currentMode} /> */}
-          </div>
-          <div className="md:w-full overflow-auto">
+          <div className="h-[350px] w-full">
             <LineChart />
           </div>
-        </div>
+        </motion.div>
+
+        {/* Quick Actions / Recent Activity */}
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.5 }}
+          className="dashboard-card"
+        >
+          <h3 className="mb-8 text-lg font-black text-white uppercase tracking-tight">Strategic Actions</h3>
+          <div className="space-y-4">
+            {[
+              { label: "New Vehicle Request", time: "2m ago", type: "request" },
+              { label: "High Revenue Alert", time: "15m ago", type: "revenue" },
+              { label: "Booking Overdue", time: "1h ago", type: "alert" },
+              { label: "New User Registered", time: "3h ago", type: "user" },
+            ].map((action, i) => (
+              <div key={i} className="group flex items-center gap-4 rounded-2xl bg-white/5 p-4 transition-all hover:bg-white/10 hover:translate-x-1 cursor-pointer">
+                <div className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                <div className="flex-1">
+                  <p className="text-sm font-bold text-slate-200">{action.label}</p>
+                  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mt-0.5">{action.time}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </motion.div>
       </div>
     </div>
   );

@@ -1,10 +1,9 @@
-import { FiSettings } from "react-icons/fi";
-import { TooltipComponent } from "@syncfusion/ej2-react-popups";
 import { Routes, Route } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
 
+// Internal Components
 import { Navbar } from "../../admin/components";
-
 import AdminHomeMain from "../../admin/pages/AdminHomeMain";
 import VendorAllVehicles from "../pages/VendorAllVehicles";
 import VendorSidebar from "../Components/VendorSidebar";
@@ -14,49 +13,53 @@ function VendorDashboard() {
   const { activeMenu } = useSelector((state) => state.adminDashboardSlice);
 
   return (
-    <div>
-      <div className="flex relative dark:bg-main-dark-bg">
-        <div className="fixed right-4 bottom-4" style={{ zIndex: "1000" }}>
-          <TooltipComponent content="Settings" position="Top">
-            <button
-              type="button"
-              className="text-3xl p-3 hover:drop-shadow-xl hover:bg-gray-200 hover:radius text-white"
-              style={{ background: "blue", borderRadius: "50%" }}
+    <div className="flex min-h-screen bg-slate-950 text-slate-200 selection:bg-emerald-500/30 selection:text-emerald-400">
+      {/* Sidebar - Desktop */}
+      <motion.aside
+        initial={false}
+        animate={{ 
+          width: activeMenu ? "20rem" : "0",
+          opacity: activeMenu ? 1 : 0 
+        }}
+        className="fixed inset-y-0 left-0 z-50 overflow-hidden bg-slate-900/50 backdrop-blur-3xl border-r border-white/5 shadow-2xl transition-all"
+      >
+        <VendorSidebar />
+      </motion.aside>
+
+      {/* Main Content Area */}
+      <main 
+        className={`flex-1 transition-all duration-300 ease-in-out ${
+          activeMenu ? "ml-80" : "ml-0"
+        }`}
+      >
+        {/* Sticky Navbar */}
+        <div className="sticky top-0 z-40 bg-slate-950/80 backdrop-blur-md border-b border-white/5">
+          <Navbar />
+        </div>
+
+        {/* Dynamic Route Content */}
+        <div className="p-8 lg:p-12">
+          <AnimatePresence mode="wait">
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.3 }}
             >
-              <FiSettings />
-            </button>
-          </TooltipComponent>
+              <Routes>
+                <Route path="/" element={<AdminHomeMain />} />
+                <Route path="/adminHome" element={<AdminHomeMain />} />
+                <Route path="/vendorAllVeihcles" element={<VendorAllVehicles />} />
+                <Route path="/bookings" element={<VendorBookings />} />
+              </Routes>
+            </motion.div>
+          </AnimatePresence>
         </div>
-        {activeMenu ? (
-          <div className="w-72 fixed sidebar dark:bg-secondary-dark-bg">
-            <VendorSidebar />
-          </div>
-        ) : (
-          <div className="w-0 dark:bg-secondary-dark-bg">
-            <VendorSidebar />
-          </div>
-        )}
+      </main>
 
-        <div
-          className={`dark:bg-white bg-white min-h-screen w-full ${
-            activeMenu ? "ml-72 md:ml-72" : "flex-2"
-          } `}
-        >
-          <div className={`fixed md:static bg-white  w-full   `}>
-            <Navbar />
-          </div>
-
-          <div className="main_section mx-8  ">
-            <Routes>
-              <Route path="/" element={<AdminHomeMain />} />
-              <Route path="/adminHome" element={<AdminHomeMain />} />
-              <Route path="/vendorAllVeihcles" element={<VendorAllVehicles />} />
-              <Route path="/bookings" element={<VendorBookings />} />
-
-            </Routes>
-          </div>
-        </div>
-      </div>
+      {/* Decorative Background Glows */}
+      <div className="fixed -top-20 -right-20 -z-10 h-96 w-96 rounded-full bg-emerald-500/10 blur-[120px]" />
+      <div className="fixed -bottom-20 -left-20 -z-10 h-96 w-96 rounded-full bg-blue-500/10 blur-[120px]" />
     </div>
   );
 }

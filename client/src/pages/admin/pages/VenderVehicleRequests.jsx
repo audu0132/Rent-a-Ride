@@ -1,213 +1,208 @@
-import { GrStatusGood } from "react-icons/gr";
-import { MdOutlinePending } from "react-icons/md";
-import { IoIosCloseCircle } from "react-icons/io";
 import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { HiCheck, HiX, HiOutlineIdentification, HiOutlineCheckBadge, HiOutlineClock } from "react-icons/hi2";
+import toast, { Toaster } from "react-hot-toast";
 
-import { Button } from "@mui/material";
-import { DataGrid } from "@mui/x-data-grid";
-import Box from "@mui/material/Box";
-import { useEffect } from "react";
+// Redux
 import { setUpdateRequestTable, setVenodrVehilces, setadminVenodrRequest } from "../../../redux/vendor/vendorDashboardSlice";
 
-
-
-
 const VenderVehicleRequests = () => {
-  const { vendorVehicleApproved, vendorVehilces ,adminVenodrRequest } = useSelector(
-    (state) => state.vendorDashboardSlice
-  );
+  const { adminVenodrRequest } = useSelector((state) => state.vendorDashboardSlice);
   const dispatch = useDispatch();
-  useEffect(() => {
-    const fetchVendorRequest = async () => {
-      try {
-        const res = await fetch(`/api/admin/fetchVendorVehilceRequests`, {
-          method: "GET",
-        });
-        if (!res.ok) {
-          console.error(
-            "Failed to fetch vendor vehicle requests:",
-            res.statusText
-          );
-          return;
-        }
-        if (res.ok) {
-          const data = await res.json();
-          dispatch(setVenodrVehilces(data));
-          dispatch(setadminVenodrRequest(data))
-        }
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    fetchVendorRequest();
-  }, [dispatch])
+  const [loading, setLoading] = useState(true);
 
-  //aprove vendor vehicle request
+  const fetchVendorRequests = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/fetchVendorVehilceRequests`, { method: "GET" });
+      if (res.ok) {
+        const data = await res.json();
+        dispatch(setVenodrVehilces(data));
+        dispatch(setadminVenodrRequest(data));
+      }
+    } catch (error) {
+      console.error("Fetch failed:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchVendorRequests();
+  }, []);
+
   const handleApproveRequest = async (id) => {
     try {
-      dispatch(setUpdateRequestTable(id))
+      dispatch(setUpdateRequestTable(id));
       const res = await fetch("/api/admin/approveVendorVehicleRequest", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          _id: id,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ _id: id }),
       });
-
-      if (!res.ok) {
-        console.log("error");
+      if (res.ok) {
+        toast.success("Request approved successfully");
+        fetchVendorRequests();
       }
-      const data = await res.json();
-     console.log(data)
     } catch (error) {
-      console.log(error);
+      console.error("Approval failed:", error);
     }
   };
 
-  //reject vendor Vehilce Request
   const handleReject = async (id) => {
     try {
-     
+      dispatch(setUpdateRequestTable(id));
       const res = await fetch("/api/admin/rejectVendorVehicleRequest", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          _id: id,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ _id: id }),
       });
-      if (!res.ok) {
-        console.log("error", res);
+      if (res.ok) {
+        toast.error("Request rejected");
+        fetchVendorRequests();
       }
-      const data = await res.json();
-      console.log(data);
     } catch (error) {
-      console.log(error);
+      console.error("Rejection failed:", error);
     }
   };
 
-  const columns = [
-    {
-      field: "image",
-      headerName: "Image",
-      width: 100,
-      renderCell: (params) => (
-        <img
-          src={params.value}
-          style={{
-            width: "50px",
-            height: "40px",
-            borderRadius: "5px",
-            objectFit: "cover",
-          }}
-          alt="vehicle"
-        />
-      ),
-    },
-    {
-      field: "registeration_number",
-      headerName: "Register Number",
-      width: 150,
-    },
-    { field: "company", headerName: "Company", width: 150 },
-    { field: "name", headerName: "Name", width: 150 },
-    {
-      field: "status",
-      headerName: "Status",
-      width: 150,
-      renderCell: (params) =>
-        params.row.status ? (
-          <div className="text-yellow-500   bg-yellow-100 p-2 rounded-lg flex items-center justify-center gap-x-1">
-            <span className="text-[8px]">Pending</span>
-            <MdOutlinePending />
-          </div>
-        ) : (
-          <div className="text-green-500   bg-green-100 p-2 rounded-lg flex items-center justify-center gap-x-1">
-            <span className="text-[8px]">Approved</span>
-            <GrStatusGood  />
-          </div>
-        ),
-    },
-    {
-      field: "Approve",
-      headerName: "Approve",
-      width: 100,
-      renderCell: (params) => (
-        <Button
-          className="bg-green-500"
-          onClick={() => {handleApproveRequest(params.row.id), dispatch(setUpdateRequestTable(params.row.id))}}
-        >
-          <GrStatusGood style={{ fontSize: 24 , color: 'green' }}/>
-        </Button>
-      ),
-    },
-    {
-      field: "reject",
-      headerName: "Reject",
-      width: 100,
-      renderCell: (params) => (
-        <Button
-          className="bg-red-200"
-          onClick={() => {handleReject(params.row.id), dispatch(setUpdateRequestTable(params.row.id))}}
-        >
-          <IoIosCloseCircle style={{ fontSize: 28 , color:'red' }}/>
-        </Button>
-      ),
-    },
-  ];
+  if (loading) return (
+    <div className="flex h-96 w-full items-center justify-center">
+      <div className="h-12 w-12 animate-spin rounded-full border-4 border-emerald-500 border-t-transparent" />
+    </div>
+  );
 
-  const rows =
-  adminVenodrRequest && 
-    adminVenodrRequest
-      .filter((vehicle) => vehicle.isDeleted === "false")
-      .map((vehicle) => ({
-        id: vehicle._id,
-        image: vehicle.image[0],
-        registeration_number: vehicle.registeration_number,
-        company: vehicle.company,
-        name: vehicle.name,
-        status: !vehicle.isAdminApproved,
-      }))
-
-      const isVendorVehiclesEmpty = vendorVehilces && vendorVehilces.length === 0;
   return (
-  <div className="max-w-[1000px]  d-flex   justify-end text-start items-end p-10 bg-slate-100 rounded-md">
-      {isVendorVehiclesEmpty ? (
-      <p>No requests yet</p>
-    ) : 
-    <Box sx={{ height: "100%", width: "100%" }}>
-      <DataGrid
-        rows={rows}
-        columns={columns}
-        initialState={{
-          pagination: {
-            paginationModel: {
-              pageSize:
-                vendorVehicleApproved && vendorVehicleApproved.length > 10
-                  ? 10
-                  : 5,
-            },
-          },
-        }}
-        pageSizeOptions={[5]}
-        
-        disableRowSelectionOnClick
-        sx={{
-          ".MuiDataGrid-columnSeparator": {
-            display: "none",
-          },
-          "&.MuiDataGrid-root": {
-            border: "none",
-          },
-        }}
-      />
-    </Box>
-}
-  </div>
-  )
+    <div className="space-y-8">
+      <Toaster position="bottom-center" />
+      
+      {/* Header Section */}
+      <div className="flex flex-col gap-2">
+        <div className="flex items-center gap-3 text-emerald-500">
+          <HiOutlineIdentification size={32} />
+          <h1 className="text-3xl font-black text-white tracking-tight uppercase">Fleet Approval Terminal</h1>
+        </div>
+        <p className="mt-1 text-slate-500 font-bold uppercase tracking-widest text-[10px] ml-11">
+          Review and authorize new vehicle submissions from verified vendors
+        </p>
+      </div>
+
+      <div className="data-table-container">
+        <div className="overflow-x-auto">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Vehicle Submission</th>
+                <th>Registration</th>
+                <th>Company</th>
+                <th>Status</th>
+                <th>Decision</th>
+              </tr>
+            </thead>
+            <tbody>
+              <AnimatePresence>
+                {adminVenodrRequest && adminVenodrRequest.length > 0 ? (
+                  adminVenodrRequest
+                    .filter((v) => v.isDeleted === "false")
+                    .map((vehicle, idx) => (
+                      <motion.tr
+                        key={vehicle._id}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: idx * 0.05 }}
+                      >
+                        <td>
+                          <div className="flex items-center gap-4">
+                            <div className="h-12 w-16 overflow-hidden rounded-xl bg-white/5 border border-white/10">
+                              <img 
+                                src={vehicle.image[0]} 
+                                alt={vehicle.name}
+                                className="h-full w-full object-cover grayscale hover:grayscale-0 transition-all duration-500"
+                              />
+                            </div>
+                            <div>
+                              <p className="font-black text-white uppercase tracking-tight">{vehicle.name}</p>
+                              <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-none">
+                                Request ID: {vehicle._id.slice(-6)}
+                              </p>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <span className="rounded-lg bg-white/5 border border-white/5 px-3 py-1.5 text-xs font-bold text-slate-300 uppercase tracking-wider">
+                            {vehicle.registeration_number}
+                          </span>
+                        </td>
+                        <td>
+                          <p className="text-xs font-bold text-slate-400 uppercase tracking-wide">
+                            {vehicle.company}
+                          </p>
+                        </td>
+                        <td>
+                          {vehicle.isRejected ? (
+                             <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-rose-500">
+                                <HiX size={14} />
+                                Rejected
+                             </span>
+                          ) : !vehicle.isAdminApproved ? (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-amber-500">
+                                <HiOutlineClock size={14} />
+                                Pending Review
+                             </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-emerald-500">
+                                <HiOutlineCheckBadge size={14} />
+                                Authorized
+                             </span>
+                          )}
+                        </td>
+                        <td>
+                          <div className="flex items-center gap-3">
+                            <motion.button
+                              whileHover={{ scale: 1.1, backgroundColor: "rgba(16, 185, 129, 0.2)" }}
+                              whileTap={{ scale: 0.9 }}
+                              disabled={vehicle.isAdminApproved || vehicle.isRejected}
+                              onClick={() => handleApproveRequest(vehicle._id)}
+                              className={`flex h-9 w-9 items-center justify-center rounded-xl border border-emerald-500/20 text-emerald-500 transition-all ${
+                                (vehicle.isAdminApproved || vehicle.isRejected) ? "opacity-20 cursor-not-allowed" : "bg-emerald-500/10"
+                              }`}
+                            >
+                              <HiCheck size={18} />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.1, backgroundColor: "rgba(244, 63, 94, 0.2)" }}
+                              whileTap={{ scale: 0.9 }}
+                              disabled={vehicle.isAdminApproved || vehicle.isRejected}
+                              onClick={() => handleReject(vehicle._id)}
+                              className={`flex h-9 w-9 items-center justify-center rounded-xl border border-rose-500/20 text-rose-500 transition-all ${
+                                (vehicle.isAdminApproved || vehicle.isRejected) ? "opacity-20 cursor-not-allowed" : "bg-rose-500/10"
+                              }`}
+                            >
+                              <HiX size={18} />
+                            </motion.button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-20 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center text-slate-600">
+                          <HiOutlineIdentification size={32} />
+                        </div>
+                        <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">No pending queue for authorization</p>
+                      </div>
+                    </td>
+                  </tr>
+                )}
+              </AnimatePresence>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default VenderVehicleRequests;

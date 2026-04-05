@@ -26,7 +26,11 @@ mongoose.connect(process.env.MONGODB_URI)
         price: 4000,
         base_package: "24",
         car_type: "suv",
-        image: ["https://imgd.aeplcdn.com/664x374/n/cw/ec/145021/kushaq-exterior-right-front-three-quarter-12.jpeg?isig=0&q=80"],
+        image: ["https://imgd.aeplcdn.com/664x374/n/cw/ec/145021/kushaq-exterior-right-front-three-quarter-12.jpeg?isig=0&q=80",
+          "https://imgd.aeplcdn.com/664x374/n/cw/ec/145021/kushaq-exterior-right-front-three-quarter-12.jpeg?isig=0&q=80",
+          "https://imgd.aeplcdn.com/664x374/n/cw/ec/145021/kushaq-exterior-right-front-three-quarter-12.jpeg?isig=0&q=80",
+          "https://imgd.aeplcdn.com/664x374/n/cw/ec/145021/kushaq-exterior-right-front-three-quarter-12.jpeg?isig=0&q=80",
+        ],
         isDeleted: "false",
         addedBy: "admin"
     };

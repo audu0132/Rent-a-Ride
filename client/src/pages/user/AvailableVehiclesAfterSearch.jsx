@@ -1,137 +1,159 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
 import { FaCarSide } from "react-icons/fa";
+import { BsFillFuelPumpFill } from "react-icons/bs";
 import { MdAirlineSeatReclineNormal } from "react-icons/md";
+import { useDispatch } from "react-redux";
 
 import CarNotFound from "./CarNotFound";
-import { useNavigate } from "react-router-dom";
+import { API } from "../../constants";
+import { setVehicleDetail } from "../../redux/user/listAllVehicleSlice";
+import { signOut } from "../../redux/user/userSlice";
 
-import { setVariants } from "../../redux/user/listAllVehicleSlice";
-import { setFilteredData } from "../../redux/user/sortfilterSlice";
-
-const AvailableVehiclesAfterSearch = () => {
-  const { availableCars } = useSelector((state) => state.selectRideSlice);
-  const { pickup_district, pickup_location, pickupDate, dropoffDate } =
-    useSelector((state) => state.bookingDataSlice);
-  const dispatch = useDispatch();
-  const navigate = useNavigate();
-
-  const showVarients = async (model) => {
-    try {
-      const datas = {
-        pickUpDistrict: pickup_district,
-        pickUpLocation: pickup_location,
-        pickupDate: pickupDate.humanReadable,
-        dropOffDate: dropoffDate.humanReadable,
-        model,
-      };
-      const res = await fetch("/api/user/getVehiclesWithoutBooking", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(datas),
-      });
-      if (!res.ok) {
-        console.log("not success");
-      }
-      if (res.ok) {
-        const data = await res.json();
-        dispatch(setVariants(data));
-        dispatch(setFilteredData(data));
-        navigate("/allVariants");
-      }
-    } catch (error) {
-      console.log(error);
+const onVehicleDetail = async (id, dispatch, navigate) => {
+  try {
+    const res = await API.post("/user/showVehicleDetails", { id });
+    dispatch(setVehicleDetail(res.data));
+    navigate("/vehicleDetails");
+  } catch (error) {
+    if (error.response?.status === 401 || error.response?.status === 403) {
+      dispatch(signOut());
     }
-  };
+    console.log(error);
+  }
+};
+
+function AvailableVehiclesAfterSearch() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const [vehicles, setVehicles] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const district =
+      params.get("district") ||
+      params.get("city") ||
+      params.get("pickup_location");
+
+    const fetchVehicles = async () => {
+      try {
+        setIsLoading(true);
+
+        const res = await API.get("/user/listAllVehicles", {
+          params: { city: district },
+        });
+
+        setVehicles(Array.isArray(res.data) ? res.data : []);
+      } catch (error) {
+        console.log(error);
+        setVehicles([]);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    if (district) {
+      fetchVehicles();
+    } else {
+      setVehicles([]);
+      setIsLoading(false);
+    }
+  }, [location.search]);
+
+  if (isLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#020617] text-white">
+        <div className="text-xl font-semibold">Loading vehicles...</div>
+      </div>
+    );
+  }
+
+  if (!vehicles || vehicles.length === 0) {
+    return <CarNotFound />;
+  }
 
   return (
-    <div>
-      {availableCars && availableCars.length > 0 && (
-        <div className="text-center flex flex-col  mt-10 justify-center items-center sm:max-w-[500px] mx-auto">
-          <h2 className="text-[18px] lg:text-[24px]">Choose From Options</h2>
-          <p className="text-center text-[8px] px-6  lg:text-[12px]  lg:w-[550px]">
-            Choose from our modern variety vehicles colllection . Feel like home
-            just like your own car Our clients have experienced our service and
-            results, and they are eager to share their positive experiences with
-            you.
+    <div className="relative min-h-screen bg-[#020617] px-4 py-12 text-white">
+      <div className="mx-auto max-w-6xl">
+        <motion.div
+          initial={{ opacity: 0, y: 35 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-10 text-center"
+        >
+          <h2 className="text-3xl font-bold">Available Vehicles</h2>
+          <p className="mt-2 text-sm text-gray-400">
+            Choose from premium cars available for your selected location.
           </p>
-        </div>
-      )}
+        </motion.div>
 
-      <div className=" mx-auto flex sm:flex-row  w-full  lg:grid lg:max-w-[1000px]  lg:grid-cols-3 justify-center items-center gap-5 flex-wrap mt-10 drop-shadow-md">
-        {availableCars &&
-          availableCars.map(
-            (cur, idx) =>
-              cur.isDeleted === "false" && (
-                <div
-                  className="bg-white box-shadow rounded-lg  drop-shadow "
-                  key={idx}
-                >
-                  <div className="mx-auto max-w-[320px] px-4 py-2 sm:px-6 sm:py-0 lg:max-w-7xl lg:px-8">
-                    <div className="aspect-h-1 aspect-w-1 w-full overflow-hidden object-contain rounded-md bg-white lg:aspect-none group-hover:opacity-75 lg:h-80 mb-3">
-                      <img
-                        src={`${cur.image[0]}`}
-                        alt={`cur.name`}
-                        className=" w-full object-contain object-center lg:h-full lg:w-full"
-                      />
-                    </div>
-                    <div className="flex justify-between items-start">
-                      <h2 className="text-[14px] capitalize font-semibold tracking-tight text-gray-900">
-                        <span></span>
-                        {cur.name}
-                      </h2>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          {vehicles.map((cur, idx) => (
+            <motion.div
+              key={cur._id || idx}
+              initial={{ opacity: 0, y: 28 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.35, delay: idx * 0.08 }}
+              className="rounded-2xl border border-white/10 bg-white/5 p-4 shadow-2xl backdrop-blur-xl"
+            >
+              <img
+                src={cur.image?.[0]}
+                alt={cur.name}
+                className="mb-4 h-52 w-full rounded-xl object-cover"
+              />
 
-                      <div className="text-[14px]  flex flex-col items-end">
-                        <p className="font-semibold">{cur.price}</p>
-                        <div className="text-[6px] relative bottom-[3px]">
-                          Per Day
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="my-2 font-mono">
-                      <div className="flex justify-between items-center mb-5 mt-5">
-                        <h3 className="text-[12px] flex justify-between items-center gap-1 ">
-                          <span>
-                            <FaCarSide />
-                          </span>
-                          {cur.company}
-                        </h3>
-                        <p className=" text-end text-[12px] flex justify-between items-center gap-1">
-                          <span>
-                            <MdAirlineSeatReclineNormal />
-                          </span>
-                          {cur.seats}
-                        </p>
-                      </div>
-                      <div className="flex justify-between items-center text-[12px] mb-5 ">
-                        <p className="flex items-center justify-center gap-1">
-                          <FaCarSide />
-                          {cur.car_type}
-                        </p>
-                        <p className="flex justify-between items-center gap-1">
-                          <>
-                            <button
-                              className="bg-green-500 rounded-sm text-black px-6 py-2"
-                              onClick={() => {
-                                showVarients(cur.model);
-                              }}
-                            >
-                              Select
-                            </button>
-                          </>
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              <div className="flex items-start justify-between">
+                <h2 className="text-lg font-semibold capitalize">{cur.name}</h2>
+                <div className="text-right">
+                  <p className="font-bold text-green-400">₹{cur.price}</p>
+                  <p className="text-xs text-gray-400">Per Day</p>
                 </div>
-              )
-          )}
+              </div>
+
+              <div className="mt-4 space-y-2 text-sm text-gray-300">
+                <div className="flex items-center justify-between">
+                  <p className="flex items-center gap-2">
+                    <FaCarSide /> {cur.company}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <MdAirlineSeatReclineNormal /> {cur.seats}
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <p className="flex items-center gap-2">
+                    <FaCarSide /> {cur.car_type}
+                  </p>
+                  <p className="flex items-center gap-2">
+                    <BsFillFuelPumpFill /> {cur.fuel_type}
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-5 flex gap-3">
+                <button
+                  className="w-full rounded-xl bg-green-500 px-4 py-3 font-semibold text-black transition hover:bg-green-400"
+                  onClick={() => onVehicleDetail(cur._id, dispatch, navigate)}
+                >
+                  Book Ride
+                </button>
+
+                <button
+                  className="w-full rounded-xl border border-white/15 bg-black/30 px-4 py-3 font-semibold text-white transition hover:bg-white/10"
+                  onClick={() => onVehicleDetail(cur._id, dispatch, navigate)}
+                >
+                  Details
+                </button>
+              </div>
+            </motion.div>
+          ))}
+        </div>
       </div>
-      {!availableCars || (availableCars.length == 0 && <CarNotFound />)}
     </div>
   );
-};
+}
 
 export default AvailableVehiclesAfterSearch;

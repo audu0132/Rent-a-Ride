@@ -1,305 +1,206 @@
 import { useEffect, useState } from "react";
-import { MdCurrencyRupee } from "react-icons/md";
-import { IoMdTime } from "react-icons/io";
-import { CiCalendarDate } from "react-icons/ci";
-import { CiLocationOn } from "react-icons/ci";
 import { useDispatch, useSelector } from "react-redux";
+import { motion, AnimatePresence } from "framer-motion";
+import { HiOutlineInformationCircle, HiOutlineCurrencyRupee, HiOutlineStatusOnline } from "react-icons/hi";
 import VendorBookingDetailModal from "./VendorBookingModal";
-import { IoIosArrowDown } from "react-icons/io";
 import { setVendorOrderModalOpen, setVendorSingleOrderDetails } from "../../../redux/vendor/vendorBookingSlice";
 
-
-const VendorBookingsTable = () => {
-  const [bookings, setBookings] = useState("");
-  const [vendorVehicles, setVendorVehicles] = useState("");
-  const [filtered, setFilteredBookings] = useState("");
+const VendorBookingTable = () => {
+  const [bookings, setBookings] = useState([]);
+  const [vendorVehicles, setVendorVehicles] = useState([]);
+  const [filteredBookings, setFilteredBookings] = useState([]);
+  const [loading, setLoading] = useState(true);
+  
   const { _id } = useSelector((state) => state.user.currentUser);
   const dispatch = useDispatch();
 
   const optionsValue = [
-    "notBooked",
-    "booked",
-    "onTrip",
-    "notPicked",
-    "canceled",
-    "overDue",
-    "tripCompleted",
+    "notBooked", "booked", "onTrip", "notPicked", "canceled", "overDue", "tripCompleted"
   ];
 
   const fetchData = async () => {
     try {
       const res = await fetch("/api/vendor/showVendorVehilces", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          _id,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ _id }),
       });
-      if (!res.ok) {
-        console.log("not success");
-        return;
+      if (res.ok) {
+        const data = await res.json();
+        setVendorVehicles(data || []);
       }
-      const data = await res.json();
-
-      if (!data) {
-        return;
-      }
-      return data;
     } catch (error) {
-      console.log(error);
+      console.error("Vendor vehicles fetch failed:", error);
     }
   };
 
-  //get all vendor Vehicles
-  async function getVendorAllVehicles() {
-    try {
-      const data = await fetchData();
-      setVendorVehicles(data);
-    } catch (err) {
-      console.error("Error fetching data:", err);
-    }
-  }
-
-  useEffect(() => {
-    getVendorAllVehicles();
-  }, []);
-
-  // fetching all bookings
   const fetchBookings = async () => {
     try {
       const res = await fetch("/api/admin/allBookings", {
         method: "GET",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
       });
-
       const data = await res.json();
-      if (data) {
-        setBookings(data);
-      }
+      if (data) setBookings(data);
     } catch (error) {
-      console.log(error);
+      console.error("Bookings fetch failed:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const handleStatusChange = (e, bookingid) => {
-    const newStatus = e.target.value;
-    const bookingId = bookingid;
-
-    const changeVehicleStatus = async () => {
-      try {
-        const isStatusChanged = await fetch("/api/admin/changeStatus", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            id: bookingId,
-            status: newStatus,
-          }),
-        });
-
-        if (!isStatusChanged.ok) {
-          return;
-        }
-        fetchBookings();
-      } catch (error) {
-        console.log(error);
-      }
-    };
-
-    changeVehicleStatus();
-  };
-
-  //all bookings
   useEffect(() => {
+    fetchData();
     fetchBookings();
   }, []);
 
   useEffect(() => {
     if (vendorVehicles.length > 0 && bookings.length > 0) {
-      const availableVehicleIds = vendorVehicles.map((vehicle) => vehicle._id);
-      const filtered = bookings.filter((booking) =>
-        availableVehicleIds.includes(booking.vehicleId)
-      );
+      const availableVehicleIds = vendorVehicles.map((v) => v._id);
+      const filtered = bookings.filter((b) => availableVehicleIds.includes(b.vehicleId));
       setFilteredBookings(filtered);
     }
   }, [vendorVehicles, bookings]);
 
+  const handleStatusChange = async (e, bookingId) => {
+    const newStatus = e.target.value;
+    try {
+      const res = await fetch("/api/admin/changeStatus", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: bookingId, status: newStatus }),
+      });
+      if (res.ok) fetchBookings();
+    } catch (error) {
+      console.error("Status change failed:", error);
+    }
+  };
+
   const handleDetailsModal = (cur) => {
-    
     dispatch(setVendorOrderModalOpen(true));
     dispatch(setVendorSingleOrderDetails(cur));
   };
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "booked": return "emerald";
+      case "onTrip": return "blue";
+      case "canceled": return "rose";
+      case "overDue": return "amber";
+      default: return "slate";
+    }
+  };
+
+  if (loading) return (
+    <div className="flex h-64 w-full items-center justify-center dashboard-card">
+      <div className="h-8 w-8 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+    </div>
+  );
+
   return (
-    <>
-      <div className="max-w-4xl mx-auto pb-20">
-        <VendorBookingDetailModal />
-
-        <div className="text-sm text-gray-600 mb-8">
-          {filtered && filtered.length > 0 ? (
-            "Check out all of your Bookings"
-          ) : (
-            <div className="font-extrabold text-black flex justify-center items-center min-h-[500px]">
-              No Bookings Yet
-            </div>
-          )}
-        </div>
-        <div className="mb-8">
-          {filtered &&
-            filtered.length > 0 &&
-            filtered.map((cur, idx) => {
-              const pickupDate = new Date(cur.pickupDate);
-              const dropoffDate = new Date(cur.dropOffDate);
-
-              return (
-                <div
-                  className="box-shadow-md drop-shadow-md border border-1px rounded-lg p-4 md:px-10 md:py-5 mb-4"
-                  key={idx}
-                >
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-0 md:gap-6 ">
-                    <div className="mb-4">
-                      <img
-                        alt={cur.vehicleDetails.name}
-                        className="w-full h-auto bg-gray-100  "
-                        height="200"
-                        src={cur.vehicleDetails.image[0]}
-                        style={{
-                          aspectRatio: "200/200",
-                          objectFit: "contain",
-                        }}
-                        width="200"
-                      />
-                    </div>
-
-                    <div className="col-span-2">
-                      <h3 className="text-lg font-semibold mb-1">{cur._id}</h3>
-                      <p className="text-gray-600 mb-2">
-                        <span className="font-bold">Id</span> : {cur._id}
-                      </p>
-                      <p className="text-lg font-semibold mb-4 flex  items-center">
-                        <span>
-                          <MdCurrencyRupee />
+    <div className="space-y-6">
+      <VendorBookingDetailModal />
+      
+      <div className="data-table-container">
+        <div className="overflow-x-auto">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Vehicle</th>
+                <th>Revenue</th>
+                <th>Timeline</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              <AnimatePresence>
+                {filteredBookings.length > 0 ? (
+                  filteredBookings.map((booking, idx) => (
+                    <motion.tr
+                      key={booking._id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: idx * 0.05 }}
+                    >
+                      <td className="min-w-[200px]">
+                        <div className="flex items-center gap-4">
+                          <div className="h-12 w-16 overflow-hidden rounded-lg bg-white/5 border border-white/10">
+                            <img 
+                              src={booking.vehicleDetails.image[0]} 
+                              alt={booking.vehicleDetails.name}
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <div>
+                            <p className="font-black text-white uppercase tracking-tight">{booking.vehicleDetails.name}</p>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+                              ID: {booking._id.slice(-8)}
+                            </p>
+                          </div>
+                        </div>
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-1 font-black text-white">
+                          <HiOutlineCurrencyRupee className="text-emerald-500" />
+                          {booking.totalPrice}
+                        </div>
+                      </td>
+                      <td>
+                        <div className="space-y-1 text-xs font-bold text-slate-400">
+                          <span>{new Date(booking.pickupDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+                          <span className="mx-2 opacity-30">→</span>
+                          <span>{new Date(booking.dropOffDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+                        </div>
+                      </td>
+                      <td>
+                        <span className={`inline-flex items-center gap-1.5 rounded-full bg-${getStatusColor(booking.status)}-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-${getStatusColor(booking.status)}-500`}>
+                          <HiOutlineStatusOnline size={12} />
+                          {booking.status}
                         </span>
-                        {cur.totalPrice}
-                      </p>
-                      <div className="flex justify-between">
-                        <div className="">
-                          <div className="mt-2 font-medium underline underline-offset-4 mb-5">
-                            Pick up
-                          </div>
-                          <div className="mt-2 capitalize">
-                            <p className="text-black text-sm mt-2 leading-6 flex items-center gap-2">
-                              <span>
-                                <CiLocationOn />
-                              </span>
-                              {cur.pickUpLocation}
-                            </p>
-
-                            <div className="text-[14px] flex flex-col justify-start items-start  pr-2 gap-2 mt-2">
-                              <div className="flex justify-between gap-2 items-center">
-                                <span>
-                                  <CiCalendarDate style={{ fontSize: 15 }} />
-                                </span>
-                                {
-                                  <>
-                                    <span> {pickupDate.getDate()}: </span>
-                                    <span>{pickupDate.getMonth()} : </span>
-                                    <span>{pickupDate.getFullYear()} </span>
-                                  </>
-                                }
-                              </div>
-                              <div className="flex justify-center items-center gap-2">
-                                <span>
-                                  <IoMdTime style={{ fontSize: 16 }} />
-                                </span>
-                                <span></span>
-                                {pickupDate.getHours()}:
-                                <span>{pickupDate.getMinutes()}</span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                        <div className="">
-                          <div className="mt-2 font-medium underline underline-offset-4 mb-5">
-                            Drop off
-                          </div>
-
-                          <div className="mt-2">
-                            <p className="text-black text-sm leading-6 mt-2 capitalize flex items-center gap-2">
-                              <span>
-                                <CiLocationOn />
-                              </span>
-                              {cur.dropOffLocation}
-                            </p>
-
-                            <div className="text-[14px] flex flex-col justify-start items-start pr-2 gap-2 mt-2">
-                              <div className="flex  justify-between gap-2 items-center">
-                                <span>
-                                  <CiCalendarDate style={{ fontSize: 15 }} />
-                                </span>
-                                <span>{dropoffDate.getDate()} : </span>
-                                <span>{dropoffDate.getMonth()} : </span>
-                                <span>{dropoffDate.getFullYear()} </span>
-                              </div>
-                              <div className="flex justify-center items-center gap-2">
-                                <span>
-                                  <IoMdTime style={{ fontSize: 16 }} />
-                                </span>
-                                <span>{dropoffDate.getHours()} </span>:
-                                <span>{dropoffDate.getMinutes()} </span>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="flex flex-col gap-y-4 items-start  lg:flex-row lg:items-center lg:justify-between mt-10">
-                        <div className="flex flex-row gap-3 items-start  md:items-center justify-between">
-                          <button
-                            className="text-white bg-black hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 px-6 py-3 text-[12px] md:px-10 md:py-2 md:text-[14px] font-medium capitalize  rounded-lg "
-                            onClick={() => handleDetailsModal(cur)}
-                          >
-                            Details
-                          </button>
-                          <div className="flex items-center justify-end ">
-                            <div className="bg-green-500 px-5 py-3 text-[12px] md:px-10 md:py-2 md:text-[14px] font-medium capitalize rounded-lg">
-                              {cur.status}
-                            </div>
-                          </div>
-                        </div>
-                        <div className="relative">
+                      </td>
+                      <td>
+                        <div className="flex items-center gap-3">
                           <select
-                            className="px-4 py-2 appearance-none capitalize drop-shadow-md border  rounded-md text-[12px] md:text-[14px]"
-                            value={optionsValue.selectedValue}
-                            onChange={(e) => {
-                              handleStatusChange(e,cur._id);
-                            }}
+                            value={booking.status}
+                            onChange={(e) => handleStatusChange(e, booking._id)}
+                            className="rounded-xl border border-white/10 bg-slate-900 px-3 py-2 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-all hover:border-emerald-500/30 hover:text-emerald-500 focus:outline-none"
                           >
-                            {optionsValue.map((cur, idx) => (
-                              <option key={idx} value={cur}>
-                                {cur}
-                              </option>
+                            {optionsValue.map((opt) => (
+                              <option key={opt} value={opt}>{opt}</option>
                             ))}
                           </select>
-                          <div className="absolute top-[10px] right-1 z-888">
-                            <IoIosArrowDown />
-                          </div>
+                          <motion.button
+                            whileHover={{ scale: 1.1 }}
+                            whileTap={{ scale: 0.9 }}
+                            onClick={() => handleDetailsModal(booking)}
+                            className="h-8 w-8 flex items-center justify-center rounded-lg bg-white/5 border border-white/10 text-slate-400 hover:text-emerald-500 hover:border-emerald-500/30"
+                          >
+                            <HiOutlineInformationCircle size={18} />
+                          </motion.button>
                         </div>
+                      </td>
+                    </motion.tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td colSpan="5" className="px-6 py-20 text-center">
+                      <div className="flex flex-col items-center gap-2">
+                        <div className="h-12 w-12 rounded-full bg-white/5 flex items-center justify-center text-slate-600">
+                          <HiOutlineInformationCircle size={32} />
+                        </div>
+                        <p className="text-sm font-bold text-slate-500 uppercase tracking-widest">No reservations assigned</p>
                       </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                    </td>
+                  </tr>
+                )}
+              </AnimatePresence>
+            </tbody>
+          </table>
         </div>
       </div>
-    </>
+    </div>
   );
 };
 
-export default VendorBookingsTable;
+export default VendorBookingTable;

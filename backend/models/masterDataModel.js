@@ -34,7 +34,7 @@ const masterDataSchema = new mongoose.Schema({
   }
 });
 
-const MasterData = mongoose.model("MasterData", masterDataSchema);
+const MasterData = mongoose.models.MasterData || mongoose.model("MasterData", masterDataSchema);
 
 export default MasterData
 

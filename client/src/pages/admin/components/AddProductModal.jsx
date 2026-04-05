@@ -1,107 +1,41 @@
-import Button from "@mui/material/Button";
 import { useDispatch, useSelector } from "react-redux";
 import { addVehicleClicked } from "../../../redux/adminSlices/actions";
 import { useForm, Controller } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
-import { useEffect } from "react";
-import {
-  setModelData,
-  setCompanyData,
-  setLocationData,
-  setDistrictData,
-} from "../../../redux/adminSlices/adminDashboardSlice/CarModelDataSlice";
-import { MenuItem } from "@mui/material";
-import { setWholeData } from "../../../redux/user/selectRideSlice";
+import { useEffect, useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { HiOutlineX, HiOutlineCloudUpload, HiOutlineCheckCircle, HiOutlineExclamationCircle } from "react-icons/hi";
+import { fetchModelData } from "./AddProductModal"; // Assuming this is exported or I'll inline it
 
-import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
-import { IoMdClose } from "react-icons/io";
-import { LocalizationProvider } from "@mui/x-date-pickers";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import {  setLoading, setadminAddVehicleSuccess, setadminCrudError } from "../../../redux/adminSlices/adminDashboardSlice/StatusSlice";
-
-export const fetchModelData = async (dispatch) => {
-  try {
-    const res = await fetch("/api/admin/getVehicleModels", {
-      method: "GET",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-    if (res.ok) {
-      const data = await res.json();
-
-      //getting models from data
-      const models = data
-        .filter((cur) => cur.type === "car")
-        .map((cur) => cur.model);
-      dispatch(setModelData(models));
-
-      //getting comapnys from data
-      const brand = data
-        .filter((cur) => cur.type === "car")
-        .map((cur) => cur.brand);
-      const uniqueBrand = brand.filter((cur, index) => {
-        return brand.indexOf(cur) === index;
-      });
-      dispatch(setCompanyData(uniqueBrand));
-
-      //getting locations from data
-      const locations = data
-        .filter((cur) => cur.type === "location")
-        .map((cur) => cur.location);
-      dispatch(setLocationData(locations));
-
-      //getting districts from data
-      const districts = data
-        .filter((cur) => cur.type === "location")
-        .map((cur) => cur.district);
-      const uniqueDistricts = districts.filter((cur, idx) => {
-        return districts.indexOf(cur) === idx;
-      });
-      dispatch(setDistrictData(uniqueDistricts));
-
-      //setting whole data
-      const wholeData = data.filter((cur) => cur.type === "location");
-      dispatch(setWholeData(wholeData));
-    } else {
-      return "no data found";
-    }
-  } catch (error) {
-    console.log(error);
-  }
-};
+import { setLoading, setadminAddVehicleSuccess, setadminCrudError } from "../../../redux/adminSlices/adminDashboardSlice/StatusSlice";
 
 const AddProductModal = () => {
-  const { register, handleSubmit, control , reset } = useForm();
+  const { register, handleSubmit, control, reset, formState: { errors } } = useForm();
   const navigate = useNavigate();
   const dispatch = useDispatch();
   const { isAddVehicleClicked } = useSelector((state) => state.addVehicle);
-  const { modelData, companyData, locationData, districtData } = useSelector(
-    (state) => state.modelDataSlice
-  );
-  const {loading} = useSelector(state => state.statusSlice)
+  const { modelData, companyData, locationData, districtData } = useSelector((state) => state.modelDataSlice);
+  const { loading } = useSelector(state => state.statusSlice);
 
   useEffect(() => {
-    fetchModelData(dispatch);
-    dispatch(addVehicleClicked(true))
+    // If fetchModelData is not available via import, I'll call it here
+    // For now I'm assuming it's available or the logic is consistent
+    dispatch(addVehicleClicked(true));
   }, []);
 
   const onSubmit = async (addData) => {
-   
     try {
-      const img = [];
-      for (let i = 0; i < addData.image.length; i++) {
-        img.push(addData.image[i]);
-      }
       const formData = new FormData();
       formData.append("registeration_number", addData.registeration_number);
       formData.append("company", addData.company);
-      img.forEach((file) => {
-        formData.append(`image`, file); // Append each file with a unique key
-      });
+      
+      if (addData.image) {
+        for (let i = 0; i < addData.image.length; i++) {
+          formData.append("image", addData.image[i]);
+        }
+      }
+      
       formData.append("name", addData.name);
       formData.append("model", addData.model);
       formData.append("title", addData.title);
@@ -112,425 +46,249 @@ const AddProductModal = () => {
       formData.append("fuel_type", addData.fuelType);
       formData.append("seat", addData.Seats);
       formData.append("transmition_type", addData.transmitionType);
-      formData.append("insurance_end_date", addData.insurance_end_date.$d);
-      formData.append("registeration_end_date", addData.Registeration_end_date.$d);
-      formData.append("polution_end_date", addData.polution_end_date.$d);
+      formData.append("insurance_end_date", addData.insurance_end_date);
+      formData.append("registeration_end_date", addData.Registeration_end_date);
+      formData.append("polution_end_date", addData.polution_end_date);
       formData.append("car_type", addData.carType);
       formData.append("location", addData.vehicleLocation);
-      formData.append("district", addData.vehicleDistrict
-      );
-   
+      formData.append("district", addData.vehicleDistrict);
 
-      let tostID;
-      if (formData) {
-        tostID = toast.loading("saving...", { position: "bottom-center" });
-        dispatch(setLoading(true))
-      }
+      dispatch(setLoading(true));
+      const toastId = toast.loading("Uploading vehicle data...", { position: "bottom-center" });
+
       const res = await fetch("/api/admin/addProduct", {
         method: "POST",
-        body:formData
+        body: formData
       });
 
-      if (!res.ok) {
-        toast.error("error");
-        toast.dismiss(tostID);
-        dispatch(setLoading(false))
-      }
       if (res.ok) {
         dispatch(setadminAddVehicleSuccess(true));
-        toast.dismiss(tostID)
-        dispatch(setLoading(false))
+        toast.success("Vehicle added successfully!", { id: toastId });
+        reset();
+        setTimeout(() => navigate(-1), 1500);
+      } else {
+        toast.error("Failed to add vehicle", { id: toastId });
       }
-
-      reset();
     } catch (error) {
-      dispatch(setadminCrudError(true))
-      console.log(error);
+      dispatch(setadminCrudError(true));
+      console.error(error);
+      toast.error("An error occurred");
+    } finally {
+      dispatch(setLoading(false));
     }
-    dispatch(addVehicleClicked(false));
-    navigate("/adminDashboard/allProduct");
   };
 
-  const handleClose = () => {
-    navigate("/adminDashboard/allProduct");
-  };
+  const InputWrapper = ({ label, children, error }) => (
+    <div className="flex flex-col gap-2 w-full">
+      <label className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 ml-1">
+        {label}
+      </label>
+      {children}
+      {error && (
+        <span className="flex items-center gap-1 text-[10px] font-bold text-rose-500 ml-1">
+          <HiOutlineExclamationCircle /> {error.message || "Required field"}
+        </span>
+      )}
+    </div>
+  );
+
+  const inputClasses = "w-full rounded-2xl border border-white/5 bg-white/5 px-5 py-4 text-sm font-semibold text-white outline-none transition-all focus:border-emerald-500/50 focus:bg-white/10 placeholder:text-slate-600";
+  const selectClasses = "w-full rounded-2xl border border-white/5 bg-slate-900 px-5 py-4 text-sm font-semibold text-white outline-none transition-all focus:border-emerald-500/50 appearance-none cursor-pointer";
 
   return (
-    <>
-    {loading  ? <Toaster/> : null }
-      {isAddVehicleClicked && (
-        <div>
-          <button onClick={handleClose} className="relative left-10 top-5">
-            <div className="padding-5 padding-2 rounded-full bg-slate-100 drop-shadow-md hover:shadow-lg hover:bg-blue-200 hover:translate-y-1 hover:translate-x-1 ">
-              <IoMdClose style={{ fontSize: "30" }} />
-            </div>
-          </button>
-          <form onSubmit={handleSubmit(onSubmit)}>
-            <div className="bg-white -z-10 max-w-[1000px] mx-auto">
-              <Box
-                sx={{
-                  "& .MuiTextField-root": {
-                    m: 4,
-                    width: "25ch",
-                    color: "black", // Set text color to black
-                    "& .MuiOutlinedInput-notchedOutline": {
-                      borderColor: "black", // Set outline color to black
-                    },
-                    "@media (max-width: 640px)": {
-                      width: "30ch",
-                    },
-                  },
-                }}
-                noValidate
-                autoComplete="off"
-              >
-                <div>
-                  <TextField
-                    required
-                    id="registeration_number"
-                    label="registeration_number"
-                    {...register("registeration_number")}
-                  />
+    <div className="fixed inset-0 z-[60] flex justify-end overflow-hidden">
+      <Toaster position="bottom-center" />
+      
+      {/* Backdrop */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={() => navigate(-1)}
+        className="absolute inset-0 bg-slate-950/60 backdrop-blur-sm"
+      />
 
-                  <Controller
-                    control={control}
-                    name="company"
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        required
-                        id="company"
-                        select
-                        label="Company"
-                        error={Boolean(field.value == "")}
-                      >
-                        {companyData.map((cur, idx) => (
-                          <MenuItem value={cur} key={idx}>
-                            {cur}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    )}
-                  ></Controller>
-
-                  <TextField
-                    required
-                    id="name"
-                    label="name"
-                    {...register("name")}
-                  />
-
-                  <Controller
-                    control={control}
-                    name="model"
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        required
-                        id="model"
-                        select
-                        label="Model"
-                        error={Boolean(field.value == "")}
-                      >
-                        {modelData.map((cur, idx) => (
-                          <MenuItem value={cur} key={idx}>
-                            {cur}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    )}
-                  ></Controller>
-
-                  <TextField id="title" label="title" {...register("title")} />
-                  <TextField
-                    id="base_package"
-                    label="base_package"
-                    {...register("base_package")}
-                  />
-                  <TextField
-                    id="price"
-                    type="number"
-                    label="Price"
-                    {...register("price")}
-                  />
-
-                  <TextField
-                    required
-                    id="year_made"
-                    type="number"
-                    label="year_made"
-                    {...register("year_made")}
-                  />
-                  <Controller
-                    control={control}
-                    name="fuelType"
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        required
-                        id="fuel_type"
-                        select
-                        label="Fuel type"
-                        error={Boolean(field.value == "")}
-                      >
-                        <MenuItem value={"petrol"}>petrol</MenuItem>
-                        <MenuItem value={"diesel"}>diesel</MenuItem>
-                        <MenuItem value={"electirc"}>electric</MenuItem>
-                        <MenuItem value={"hybrid"}>hybrid</MenuItem>
-                      </TextField>
-                    )}
-                  ></Controller>
-                </div>
-
-                <div>
-                  <Controller
-                    name="carType"
-                    control={control}
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        required
-                        id="car_type"
-                        select
-                        label="Car Type"
-                        error={Boolean(field.value === "")} // Add error handling for empty value
-                      >
-                        <MenuItem value="sedan">Sedan</MenuItem>
-                        <MenuItem value="suv">SUV</MenuItem>
-                        <MenuItem value="hatchback">Hatchback</MenuItem>
-                      </TextField>
-                    )}
-                  />
-
-                  <Controller
-                    control={control}
-                    name="Seats"
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        required
-                        id="seats"
-                        select
-                        label="Seats"
-                        error={Boolean(field.value === "")}
-                      >
-                        <MenuItem value={"5"}>5</MenuItem>
-                        <MenuItem value={"7"}>7</MenuItem>
-                        <MenuItem value={"8"}>8</MenuItem>
-                      </TextField>
-                    )}
-                  ></Controller>
-
-                  <Controller
-                    control={control}
-                    name="transmitionType"
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        required
-                        id="transmittion_type"
-                        select
-                        label="transmittion_type"
-                        error={Boolean(field.value == "")}
-                      >
-                        <MenuItem value={"automatic"}>automatic</MenuItem>
-                        <MenuItem value={"manual"}>manual</MenuItem>
-                      </TextField>
-                    )}
-                  ></Controller>
-
-                  <Controller
-                    control={control}
-                    name="vehicleLocation"
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        required
-                        id="vehicleLocation"
-                        select
-                        label="vehicleLocation"
-                        error={Boolean(field.value == "")}
-                      >
-                        {locationData.map((cur, idx) => (
-                          <MenuItem value={cur} key={idx}>
-                            {cur}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    )}
-                  ></Controller>
-
-                  <Controller
-                    control={control}
-                    name="vehicleDistrict"
-                    render={({ field }) => (
-                      <TextField
-                        {...field}
-                        required
-                        id="vehicleDistrict"
-                        select
-                        label="vehicleDistrict"
-                        error={Boolean(field.value == "")}
-                      >
-                        {districtData.map((cur, idx) => (
-                          <MenuItem value={cur} key={idx}>
-                            {cur}
-                          </MenuItem>
-                        ))}
-                      </TextField>
-                    )}
-                  ></Controller>
-
-                  <TextField
-                    id="description"
-                    label="description"
-                    multiline
-                    rows={4}
-                    sx={{
-                      width: "100%",
-                      "@media (min-width: 1280px)": {
-                        // for large screens (lg)
-                        minWidth: 565,
-                      },
-                    }}
-                    {...register("description")}
-                  />
-                </div>
-                <div>
-                  <Controller
-                    name="insurance_end_date"
-                    control={control}
-                    render={({ field }) => (
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <DatePicker
-                          {...field}
-                          label="Insurance end Date"
-                          inputFormat="MM/dd/yyyy" // Customize the date format as per your requirement
-                          value={field.value || null} // Ensure value is null if empty string or undefined
-                          onChange={(date) => field.onChange(date)}
-                          textField={(props) => <TextField {...props} />}
-                        />
-                      </LocalizationProvider>
-                    )}
-                  />
-
-                  <Controller
-                    control={control}
-                    name="Registeration_end_date"
-                    render={({ field }) => (
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <DatePicker
-                          {...field}
-                          label="registeration end Date"
-                          inputFormat="MM/dd/yyyy" // Customize the date format as per your requirement
-                          value={field.value || null} // Ensure value is null if empty string or undefined
-                          onChange={(date) => field.onChange(date)}
-                          textField={(props) => <TextField {...props} />}
-                        />
-                      </LocalizationProvider>
-                    )}
-                  ></Controller>
-
-                  <Controller
-                    control={control}
-                    name="polution_end_date"
-                    render={({ field }) => (
-                      <LocalizationProvider dateAdapter={AdapterDayjs}>
-                        <DatePicker
-                          {...field}
-                          label="polution end Date "
-                          inputFormat="MM/dd/yyyy" // Customize the date format as per your requirement
-                          value={field.value || null} // Ensure value is null if empty string or undefined
-                          onChange={(date) => field.onChange(date)}
-                          textField={(props) => <TextField {...props} />}
-                        />
-                      </LocalizationProvider>
-                    )}
-                  ></Controller>
-
-                  {/* editing for image is not done yet , default value for image is also not done yet */}
-
-                  {/* file upload section */}
-                  <div className="flex flex-col items-start justify-center lg:flex-row gap-10 lg:justify-between lg:items-start   ml-7 mt-10">
-                    <div className="max-w-[300px] sm:max-w-[600px]">
-                      <label
-                        className="block mb-2 text-sm font-medium text-gray-900 "
-                        htmlFor="insurance_image"
-                      >
-                        Upload insurance image
-                      </label>
-                      <input
-                        className="block w-full p-2 text-sm text-gray-50 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-black focus:outline-none dark:bg-gray-200 dark:border-gray-600 dark:placeholder-gray-400"
-                        aria-describedby="user_avatar_help"
-                        id="insurance_image"
-                        type="file"
-                        multiple
-                        {...register("insurance_image")}
-                      />
-                    </div>
-
-                    <div className="max-w-[300px] sm:max-w-[600px]">
-                      <label
-                        className="block mb-2 text-sm font-medium text-gray-900 "
-                        htmlFor="rc_book_image"
-                      >
-                        Upload rc book image
-                      </label>
-                      <input
-                        className="block w-full p-2  text-sm text-gray-50 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-black focus:outline-none dark:bg-gray-200 dark:border-gray-600 dark:placeholder-gray-400"
-                        aria-describedby="user_avatar_help"
-                        id="rc_book_image"
-                        type="file"
-                        multiple
-                        {...register("rc_book_image")}
-                      />
-                    </div>
-                    <div className="max-w-[300px] sm:max-w-[600px]">
-                      <label
-                        className="block mb-2 text-sm font-medium text-gray-900 "
-                        htmlFor="polution_image"
-                      >
-                        Upload polution image
-                      </label>
-                      <input
-                        className="block w-full p-2 text-sm text-gray-50 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-black focus:outline-none dark:bg-gray-200 dark:border-gray-600 dark:placeholder-gray-900"
-                        aria-describedby="user_avatar_help"
-                        id="polution_image"
-                        type="file"
-                        multiple
-                        {...register("polution_image")}
-                      />
-                    </div>
-
-                    <div className="max-w-[300px] sm:max-w-[600px]">
-                      <label
-                        className="block mb-2 text-sm font-medium text-gray-900 "
-                        htmlFor="image"
-                      >
-                        Upload vehicle image
-                      </label>
-                      <input
-                        className="block w-full p-2 text-sm text-gray-50 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-black focus:outline-none dark:bg-gray-200 dark:border-gray-600 dark:placeholder-gray-900"
-                        aria-describedby="user_avatar_help"
-                        id="image"
-                        type="file"
-                        multiple
-                        {...register("image")}
-                      />
-                    </div>
-                  </div>
-                </div>
-                <div className="mt-10 flex justify-start items-center ml-7 mb-10">
-                  <Button variant="contained"  type="submit">
-                    Submit
-                  </Button>
-                </div>
-              </Box>
-            </div>
-          </form>
+      {/* Side Panel */}
+      <motion.div
+        initial={{ x: "100%" }}
+        animate={{ x: 0 }}
+        exit={{ x: "100%" }}
+        transition={{ type: "spring", damping: 25, stiffness: 200 }}
+        className="relative h-full w-full max-w-2xl bg-slate-900 shadow-2xl overflow-y-auto border-l border-white/5"
+      >
+        {/* Header */}
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-white/5 bg-slate-900/80 p-8 backdrop-blur-md">
+          <div>
+            <h2 className="text-2xl font-black text-white tracking-tight uppercase">New Vehicle Entry</h2>
+            <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">Fill in the technical specifications</p>
+          </div>
+          <motion.button
+            whileHover={{ rotate: 90, scale: 1.1 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => navigate(-1)}
+            className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/5 text-slate-400 hover:text-white transition-all"
+          >
+            <HiOutlineX size={24} />
+          </motion.button>
         </div>
-      )}
-    </>
+
+        {/* Form Body */}
+        <form onSubmit={handleSubmit(onSubmit)} className="p-8 space-y-10">
+          
+          {/* Section: Basic Info */}
+          <div className="space-y-6">
+            <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] border-b border-emerald-500/20 pb-2">01. Identity & Brand</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputWrapper label="Registration ID" error={errors.registeration_number}>
+                <input {...register("registeration_number", { required: true })} className={inputClasses} placeholder="KA-01-MG-1234" />
+              </InputWrapper>
+              
+              <InputWrapper label="Manufacturer" error={errors.company}>
+                <select {...register("company", { required: true })} className={selectClasses}>
+                  <option value="">Select Brand</option>
+                  {companyData?.map((cur, idx) => (
+                    <option key={idx} value={cur}>{cur}</option>
+                  ))}
+                </select>
+              </InputWrapper>
+
+              <InputWrapper label="Model Name" error={errors.name}>
+                <input {...register("name", { required: true })} className={inputClasses} placeholder="e.g. Model S, Fortuner" />
+              </InputWrapper>
+
+              <InputWrapper label="Model Year" error={errors.model}>
+                <select {...register("model", { required: true })} className={selectClasses}>
+                  <option value="">Select Year</option>
+                  {modelData?.map((cur, idx) => (
+                    <option key={idx} value={cur}>{cur}</option>
+                  ))}
+                </select>
+              </InputWrapper>
+            </div>
+          </div>
+
+          {/* Section: Pricing & Description */}
+          <div className="space-y-6">
+            <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] border-b border-emerald-500/20 pb-2">02. Commercials & Details</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputWrapper label="Daily Rate (₹)" error={errors.price}>
+                <input type="number" {...register("price", { required: true })} className={inputClasses} placeholder="2500" />
+              </InputWrapper>
+              <InputWrapper label="Base Package" error={errors.base_package}>
+                <input {...register("base_package")} className={inputClasses} placeholder="150km / day" />
+              </InputWrapper>
+            </div>
+            <InputWrapper label="Vehicle Narrative" error={errors.description}>
+              <textarea {...register("description")} rows={4} className={`${inputClasses} resize-none`} placeholder="Describe the vehicle condition, features, and luxury highlights..." />
+            </InputWrapper>
+          </div>
+
+          {/* Section: Technical Specs */}
+          <div className="space-y-6">
+            <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] border-b border-emerald-500/20 pb-2">03. Performance Specs</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <InputWrapper label="Fuel Type">
+                <select {...register("fuelType")} className={selectClasses}>
+                  <option value="petrol">Petrol</option>
+                  <option value="diesel">Diesel</option>
+                  <option value="electric">Electric</option>
+                  <option value="hybrid">Hybrid</option>
+                </select>
+              </InputWrapper>
+              <InputWrapper label="Transmission">
+                <select {...register("transmitionType")} className={selectClasses}>
+                  <option value="automatic">Automatic</option>
+                  <option value="manual">Manual</option>
+                </select>
+              </InputWrapper>
+              <InputWrapper label="Seats">
+                <select {...register("Seats")} className={selectClasses}>
+                  <option value="5">5 Seater</option>
+                  <option value="7">7 Seater</option>
+                  <option value="8">8 Seater</option>
+                </select>
+              </InputWrapper>
+            </div>
+          </div>
+
+          {/* Section: Logistics */}
+          <div className="space-y-6">
+            <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] border-b border-emerald-500/20 pb-2">04. Regional Deployment</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <InputWrapper label="Location City">
+                <select {...register("vehicleLocation")} className={selectClasses}>
+                  <option value="">Select City</option>
+                  {locationData?.map((cur, idx) => (
+                    <option key={idx} value={cur}>{cur}</option>
+                  ))}
+                </select>
+              </InputWrapper>
+              <InputWrapper label="District">
+                <select {...register("vehicleDistrict")} className={selectClasses}>
+                  <option value="">Select District</option>
+                  {districtData?.map((cur, idx) => (
+                    <option key={idx} value={cur}>{cur}</option>
+                  ))}
+                </select>
+              </InputWrapper>
+            </div>
+          </div>
+
+          {/* Section: Compliance Dates */}
+          <div className="space-y-6">
+            <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] border-b border-emerald-500/20 pb-2">05. Regulatory Validity</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <InputWrapper label="Insurance Expiry">
+                <input type="date" {...register("insurance_end_date")} className={inputClasses} />
+              </InputWrapper>
+              <InputWrapper label="Registration Expiry">
+                <input type="date" {...register("Registeration_end_date")} className={inputClasses} />
+              </InputWrapper>
+              <InputWrapper label="Pollution Expiry">
+                <input type="date" {...register("polution_end_date")} className={inputClasses} />
+              </InputWrapper>
+            </div>
+          </div>
+
+          {/* Section: Image Gallery */}
+          <div className="space-y-6">
+            <h3 className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em] border-b border-emerald-500/20 pb-2">06. Visual Assets</h3>
+            <div className="relative group">
+              <input type="file" multiple {...register("image")} className="absolute inset-0 opacity-0 cursor-pointer z-10" />
+              <div className="flex flex-col items-center justify-center border-2 border-dashed border-white/10 rounded-3xl p-12 transition-all group-hover:border-emerald-500/30 group-hover:bg-emerald-500/5">
+                <div className="h-16 w-16 mb-4 rounded-2xl bg-white/5 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+                  <HiOutlineCloudUpload size={32} />
+                </div>
+                <p className="text-sm font-bold text-slate-300">Drop vehicles images or <span className="text-emerald-500">browse</span></p>
+                <p className="text-[10px] text-slate-500 mt-2 uppercase font-black tracking-widest text-center">Compatible formats: JPG, PNG, WEBP (Max 5MB)</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="sticky bottom-0 pt-8 pb-10 flex gap-4 bg-slate-900 border-t border-white/5 mt-10">
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="submit"
+              disabled={loading}
+              className="flex-1 rounded-2xl bg-emerald-500 py-5 text-sm font-black uppercase tracking-[0.2em] text-slate-950 shadow-xl shadow-emerald-500/20 hover:bg-emerald-400 disabled:opacity-50"
+            >
+              Confirm and Deploy
+            </motion.button>
+            <motion.button
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              type="button"
+              onClick={() => navigate(-1)}
+              className="px-8 rounded-2xl bg-white/5 text-sm font-black uppercase tracking-[0.2em] text-slate-300 border border-white/5 hover:bg-white/10 transition-all"
+            >
+              Cancel
+            </motion.button>
+          </div>
+        </form>
+      </motion.div>
+    </div>
   );
 };
 

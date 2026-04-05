@@ -23,6 +23,7 @@ import authRoute from "./routes/authRoute.js";
 import adminRoute from "./routes/adminRoute.js";
 import vendorRoute from "./routes/venderRoute.js";
 import { cloudinaryConfig } from "./utils/cloudinaryConfig.js";
+import locationRoute from "./routes/locationRoute.js";
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -50,6 +51,7 @@ app.use("/api/user", userRoute);
 app.use("/api/auth", authRoute);
 app.use("/api/admin", adminRoute);
 app.use("/api/vendor", vendorRoute);
+app.use("/api/location", locationRoute);
 
 // ✅ Error Handler
 app.use((err, req, res, next) => {
@@ -66,8 +68,14 @@ mongoose
   .then(() => {
     console.log("✅ MongoDB Connected");
 
-    app.listen(PORT, () => {
+    const server = app.listen(PORT, () => {
       console.log(`🚀 Server running on port ${PORT}`);
+    });
+
+    server.on("error", (err) => {
+      if (err.code === "EADDRINUSE") {
+        console.error(`❌ Port ${PORT} is already in use.`);
+      }
     });
   })
   .catch((err) => {

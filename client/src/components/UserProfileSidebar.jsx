@@ -6,13 +6,11 @@ import {
   deleteUserSuccess,
   signOut,
 } from "../redux/user/userSlice";
+import { motion, AnimatePresence } from "framer-motion";
+import { HiOutlineUserCircle, HiOutlineLogout, HiOutlineTrash, HiX } from "react-icons/hi";
 import { SiShopware } from "react-icons/si";
-import { TooltipComponent } from "@syncfusion/ej2-react-popups";
-import { MdOutlineCancel } from "react-icons/md";
 import { links } from "./UserSidebarContent";
 import { showSidebarOrNot } from "../redux/adminSlices/adminDashboardSlice/DashboardSlice";
-import { CiLogout } from "react-icons/ci";
-
 
 const UserProfileSidebar = () => {
   const { activeMenu, screenSize } = useSelector(
@@ -26,17 +24,10 @@ const UserProfileSidebar = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch();
 
-  const activeLink =
-    "flex items-center gap-5 pl-4 pt-3 pb-2.5 rounded-lg text-black bg-blue-50 text-md  m-2";
-  //in normal mode there was dark:text-gray-200 i removed it
-  const normalLink =
-    "flex items-center gap-5 pl-4 pt-3 pb-2.5 rounded-lg  text-md text-gray-700   dark:hover:text-black hover:bg-slate-100 m-2";
-
-  //SignOut
   const handleSignout = async () => {
     const res = await fetch("/api/admin/signout", {
       method: "GET",
-      credentials:'include'
+      credentials: 'include'
     });
     const data = await res.json();
     if (data) {
@@ -57,87 +48,130 @@ const UserProfileSidebar = () => {
         return;
       }
       dispatch(deleteUserSuccess(data));
+      navigate("/signin");
     } catch (error) {
       dispatch(deleteUserFailure(error));
     }
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    visible: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1,
+        delayChildren: 0.2
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, x: -20 },
+    visible: { opacity: 1, x: 0 }
+  };
+
   return (
-    <div className="ml-3 h-screen md:overflow-hidden overflow-auto md:hover:overflow-auto pb-10">
-      {activeMenu && (
-        <>
-          <div className="flex justify-between items-center">
-            <Link
-              to={`/`}
-              onClick={() => {}}
-              className="items-center flex gap-3 mt-4 ml-3 text-xl font-extrabold text-black tracking-tight "
-            >
-              <SiShopware />
-              Rent a Ride
-            </Link>
-            {/* hide sidebar button */}
-            <TooltipComponent content={"menu"} position="BottomCenter">
-              <button
-                className="text-xl rounded-full p-3 mt-4 block  hover:bg-gray-500"
-                onClick={() => {dispatch(showSidebarOrNot(false))}}
-              >
-                <MdOutlineCancel />
-              </button>
-            </TooltipComponent>
+    <div className="flex h-full flex-col p-6 sm:p-8">
+      {/* Sidebar Header */}
+      <div className="mb-12 flex items-center justify-between">
+        <Link
+          to="/"
+          className="flex items-center gap-3 transition-transform hover:scale-105"
+        >
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]">
+            <SiShopware size={24} />
           </div>
-          <div className="mt-10">
-            {links.map((cur, idx) => (
-              <div key={idx}>
-                {cur.links.map((link) => (
-                  <NavLink
-                    to={`/profile/${link.name}`}
-                    key={link.name}
-                    onClick={() => {
-                      if (screenSize <= 900 && activeMenu) {
-                        dispatch(showSidebarOrNot(false));
-                      }
-                    }}
-                    className={({ isActive }) =>
-                      isActive ? activeLink : normalLink
+          <span className="text-xl font-black tracking-tight text-white font-heading">Rent a Ride</span>
+        </Link>
+        
+        <button
+          onClick={() => dispatch(showSidebarOrNot(false))}
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 border border-white/10 text-slate-400 transition-all hover:bg-white/10 hover:text-white lg:hidden"
+        >
+          <HiX size={20} />
+        </button>
+      </div>
+
+      {/* User Profile Summary */}
+      <div className="mb-10 flex items-center gap-4 border-b border-white/5 pb-10">
+        <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-white/10">
+          <img 
+            src={currentUser?.profilePicture || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png"} 
+            alt="Profile" 
+            className="h-full w-full object-cover" 
+          />
+        </div>
+        <div className="flex-1 overflow-hidden">
+          <h4 className="truncate text-sm font-bold text-white">{currentUser?.username || "Luxury Member"}</h4>
+          <p className="truncate text-xs font-semibold text-slate-500 uppercase tracking-widest">{currentUser?.email?.split('@')[0] || "Standard Tier"}</p>
+        </div>
+      </div>
+
+      {/* Navigation Links */}
+      <motion.nav 
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="flex-1 space-y-2"
+      >
+        {links.map((section, sIdx) => (
+          <div key={sIdx} className="mb-8">
+            <h5 className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">
+              {section.title || "Dashboard"}
+            </h5>
+            <div className="space-y-1">
+              {section.links.map((link) => (
+                <NavLink
+                  key={link.name}
+                  to={`/profile/${link.name}`}
+                  onClick={() => {
+                    if (screenSize <= 900) dispatch(showSidebarOrNot(false));
+                  }}
+                  className={({ isActive }) => `
+                    group flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all
+                    ${isActive 
+                      ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" 
+                      : "text-slate-400 hover:bg-white/5 hover:text-white border border-transparent"
                     }
-                  >
-                    {link.icon}
-                    <span className="capitalize text-gray-600">
-                      {link.name}
-                    </span>
-                  </NavLink>
-                ))}
-              </div>
-            ))}
-
-            <div className="flex flex-col gap-y-5">
-
-            <div className="flex items-center mt-10 gap-2">
-                <button
-                  type="button"
-                  className="ml-4 text-red-400"
-                  onClick={handleSignout}
+                  `}
                 >
-                  SignOut
-                </button>
-                <CiLogout />
-              </div>
-              <div className="ml-4">
-              <button
-                className="text-red-400"
-                onClick={handleDelete}
-                type="button"
-              >
-                {isLoading ? "Loading..." : "Delete User"}
-              </button>
-              </div>
-              
-
-              
+                  <span className="text-lg opacity-70 group-hover:scale-110 transition-transform">{link.icon}</span>
+                  <span className="capitalize">{link.name}</span>
+                  {/* Active Indicator Glimmer */}
+                  {({ isActive }) => isActive && (
+                    <motion.div 
+                      layoutId="activeIndicator"
+                      className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                    />
+                  )}
+                </NavLink>
+              ))}
             </div>
           </div>
-        </>
-      )}
+        ))}
+      </motion.nav>
+
+      {/* Action Buttons */}
+      <div className="mt-8 space-y-3 pt-6 border-t border-white/5">
+        <motion.button
+          whileHover={{ x: 5 }}
+          onClick={handleSignout}
+          className="flex w-full items-center gap-4 px-4 py-3 text-sm font-bold text-slate-400 transition-colors hover:text-rose-400"
+        >
+          <HiOutlineLogout size={20} className="opacity-70" />
+          <span>Sign Out</span>
+        </motion.button>
+        
+        <motion.button
+          whileHover={{ x: 5 }}
+          onClick={handleDelete}
+          disabled={isLoading}
+          className="flex w-full items-center gap-4 px-4 py-3 text-sm font-bold text-slate-600 transition-colors hover:text-rose-600 disabled:opacity-50"
+        >
+          <HiOutlineTrash size={20} className="opacity-70" />
+          <span>{isLoading ? "Deleting..." : "Delete Account"}</span>
+        </motion.button>
+      </div>
     </div>
   );
 };

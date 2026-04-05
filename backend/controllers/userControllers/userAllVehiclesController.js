@@ -1,27 +1,38 @@
 import vehicle from "../../models/vehicleModel.js";
+import Booking from "../../models/BookingModel.js";
 import { errorHandler } from "../../utils/error.js";
 
-//show all vehicles to user
+// show all vehicles to user
 export const listAllVehicles = async (req, res, next) => {
   try {
-    const vehicles = await vehicle.find();
+    const city = req.query.city?.trim();
 
-    if (!vehicles) {
-      return next(errorHandler(404, "no vehicles found"));
+    const query = {
+      isBooked: false,
+      isAdminApproved: true,
+      $or: [{ isDeleted: false }, { isDeleted: "false" }],
+    };
+
+    if (city) {
+      query.district = { $regex: `^${city}$`, $options: "i" };
     }
-    res.status(200).json(vehicles);
+
+    const vehicles = await vehicle.find(query);
+
+    return res.status(200).json(vehicles || []);
   } catch (error) {
     console.log(error);
     next(errorHandler(500, "something went wrong"));
   }
 };
 
-//show one vehicle Detail to user
+// show one vehicle detail to user
 export const showVehicleDetails = async (req, res, next) => {
   try {
-    if (!req.body) {
-      next(errorHandler(409, "body cannot be empty"));
+    if (!req.body || !req.body.id) {
+      return next(errorHandler(400, "vehicle id is required"));
     }
+
     const { id } = req.body;
     const vehicleDetail = await vehicle.findById(id);
 
@@ -29,53 +40,45 @@ export const showVehicleDetails = async (req, res, next) => {
       return next(errorHandler(404, "no vehicles found"));
     }
 
-    res.status(200).json(vehicleDetail);
+    return res.status(200).json(vehicleDetail);
   } catch (error) {
     console.log(error);
     next(errorHandler(500, "something went wrong"));
   }
 };
 
-//check vehicle availabilitty
+// check vehicle availability
 export const checkAvailability = async (req, res, next) => {
   try {
     if (!req.body) {
-      next(errorHandler(401, "bad request no body"));
+      return next(errorHandler(400, "bad request no body"));
     }
+
     const { pickupDate, dropOffDate, vehicleId } = req.body;
 
     if (!pickupDate || !dropOffDate || !vehicleId) {
-      console.log("pickup , dropffdate and vehicleId is required");
-      next(errorHandler(409, "pickup , dropffdate and vehicleId is required"));
+      return next(
+        errorHandler(409, "pickupDate, dropOffDate and vehicleId are required")
+      );
     }
 
-    // Check if pickupDate is before dropOffDate
-    if (pickupDate >= dropOffDate) {
-      return next(errorHandler(409, "Invalid date range"));
+    const pickup = new Date(pickupDate);
+    const dropoff = new Date(dropOffDate);
+
+    if (Number.isNaN(pickup.getTime()) || Number.isNaN(dropoff.getTime())) {
+      return next(errorHandler(400, "invalid date format"));
     }
 
-    const sixHoursLater = new Date(dropOffDate);
-    sixHoursLater.setTime(sixHoursLater.getTime() + 6 * 60 * 60 * 1000);
-    console.log(sixHoursLater)
+    if (pickup >= dropoff) {
+      return next(errorHandler(409, "invalid date range"));
+    }
 
-    //checking data base  find overlapping pickup and dropoffDates
     const existingBookings = await Booking.find({
       vehicleId,
-      $or: [
-        { pickupDate: { $lt: dropOffDate }, dropOffDate: { $gt: pickupDate } }, // Overlap condition
-        { pickupDate: { $gte: pickupDate, $lt: dropOffDate } }, // Start within range
-        { dropOffDate: { $gt: pickupDate, $lte: dropOffDate } }, // End within range
-        {
-          pickupDate: { $lte: pickupDate },
-          dropOffDate: { $gte: dropOffDate },
-        }, // Booking includes the entire time range
-        {
-          pickupDate: { $gte: sixHoursLater },
-        },
-      ],
+      pickupDate: { $lt: dropoff },
+      dropOffDate: { $gt: pickup },
     });
 
-    // If there are overlapping bookings, return an error
     if (existingBookings.length > 0) {
       return next(
         errorHandler(
@@ -85,112 +88,108 @@ export const checkAvailability = async (req, res, next) => {
       );
     }
 
-    // If no overlapping bookings, vehicle is available
-    return res
-      .status(200)
-      .json({ message: "Vehicle is available for booking" });
+    return res.status(200).json({
+      message: "Vehicle is available for booking",
+    });
   } catch (error) {
     console.log(error);
     next(errorHandler(500, "error in checkAvailability"));
   }
 };
 
-// ---------------------
-
-//search car filter in homepage
+// search car filter in homepage
 export const searchCar = async (req, res, next) => {
   try {
-    if (req && req.body) {
-      const {
-        pickup_district,
-        pickup_location,
-        dropoff_location,
-        pickuptime,
-        dropofftime,
-      } = req.body;
-
-      //checking if droOfftime is before or equals to pickupTime
-      const pickuptimeDate = new Date(pickuptime.$d);
-      const dropofftimeDate = new Date(dropofftime.$d);
-      // Calculate the difference in milliseconds between two dates
-      const dateDifferenceInMilliseconds =
-        dropofftimeDate.getTime() - pickuptimeDate.getTime();
-      // Convert milliseconds to days
-      const dateDifferenceInDays =
-        dateDifferenceInMilliseconds / (1000 * 60 * 60 * 24);
-
-      if (dropofftime.$d <= pickuptime.$d || dateDifferenceInDays < 1) {
-        return next(errorHandler(401, "dropoff date should be larger"));
-      } else {
-        const search = await vehicle.aggregate([
-          {
-            $match: {
-              isDeleted: "false",
-            },
-          },
-          {
-            $match: {
-              district: pickup_district,
-              location: pickup_location,
-              isBooked: "false",
-            },
-          },
-          {
-            $group: {
-              _id: {
-                model: "$model",
-                location: "$location",
-                fuel_type: "$fuel_type",
-                transmition: "$transmition",
-                seats: "$seats",
-              },
-              vehicles: {
-                $push: "$$ROOT",
-              },
-            },
-          },
-          {
-            $project: {
-              _id: 1,
-              vehicles: {
-                $cond: {
-                  if: {
-                    $gt: [
-                      {
-                        $size: "$vehicles",
-                      },
-                      1,
-                    ],
-                  },
-                  then: {
-                    $arrayElemAt: ["$vehicles", 0],
-                  },
-                  else: "$vehicles",
-                },
-              },
-            },
-          },
-          {
-            $unwind: {
-              path: "$vehicles",
-            },
-          },
-          {
-            $replaceRoot: {
-              newRoot: "$vehicles",
-            },
-          },
-        ]);
-        if (search) {
-          res.status(200).json(search);
-        } else {
-          res.status(404).json({ message: "no car found" });
-        }
-      }
-    } else {
-      res.status(400).json({ message: "please provide all the details" });
+    if (!req.body) {
+      return res.status(400).json({ message: "please provide all the details" });
     }
+
+    const {
+      pickup_district,
+      pickup_location,
+      dropoff_location,
+      pickuptime,
+      dropofftime,
+    } = req.body;
+
+    if (
+      !pickup_district ||
+      !pickup_location ||
+      !dropoff_location ||
+      !pickuptime ||
+      !dropofftime
+    ) {
+      return next(errorHandler(400, "please provide all the details"));
+    }
+
+    const pickupRaw = pickuptime?.$d || pickuptime;
+    const dropoffRaw = dropofftime?.$d || dropofftime;
+
+    const pickupDate = new Date(pickupRaw);
+    const dropoffDate = new Date(dropoffRaw);
+
+    if (
+      Number.isNaN(pickupDate.getTime()) ||
+      Number.isNaN(dropoffDate.getTime())
+    ) {
+      return next(errorHandler(400, "invalid date format"));
+    }
+
+    const dateDifferenceInMilliseconds =
+      dropoffDate.getTime() - pickupDate.getTime();
+    const dateDifferenceInDays =
+      dateDifferenceInMilliseconds / (1000 * 60 * 60 * 24);
+
+    if (dropoffDate <= pickupDate || dateDifferenceInDays < 1) {
+      return next(errorHandler(401, "dropoff date should be larger"));
+    }
+
+    const search = await vehicle.aggregate([
+      {
+        $match: {
+          district: pickup_district,
+          location: pickup_location,
+          isAdminApproved: true,
+          $or: [{ isDeleted: false }, { isDeleted: "false" }],
+          $or: [{ isBooked: false }, { isBooked: "false" }],
+        },
+      },
+      {
+        $group: {
+          _id: {
+            model: "$model",
+            location: "$location",
+            fuel_type: "$fuel_type",
+            transmition: "$transmition",
+            seats: "$seats",
+          },
+          vehicles: {
+            $push: "$$ROOT",
+          },
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          vehicles: {
+            $cond: {
+              if: { $gt: [{ $size: "$vehicles" }, 1] },
+              then: { $arrayElemAt: ["$vehicles", 0] },
+              else: { $arrayElemAt: ["$vehicles", 0] },
+            },
+          },
+        },
+      },
+      {
+        $replaceRoot: {
+          newRoot: "$vehicles",
+        },
+      },
+    ]);
+
+    return res.status(200).json(search || []);
   } catch (error) {
-    next(errorHandler(500, "something went wrong while Searching car"));
+    console.log(error);
+    next(errorHandler(500, "something went wrong while searching car"));
   }
 };

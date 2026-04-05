@@ -16,7 +16,7 @@ export async function availableAtDate(pickupDate, dropOffDate) {
           dropOffDate: { $gte: dropOffDate },
         }, // Booking includes the entire time range
       ],
-    });
+    });    
 
     const vehicleIds = existingBookings.map((booking) => booking.vehicleId);
     const uniqueVehicleIds = [...new Set(vehicleIds)];
