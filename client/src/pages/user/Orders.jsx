@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
-import { HiOutlineCalendar, HiOutlineLocationMarker, HiOutlineClock, HiOutlineCurrencyRupee, HiOutlineInformationCircle } from "react-icons/hi";
+import { HiOutlineCalendar, HiOutlineMapPin, HiOutlineClock, HiOutlineCurrencyRupee, HiOutlineInformationCircle } from "react-icons/hi2";
 
 // Components
 import UserOrderDetailsModal from "../../components/UserOrderDetailsModal";
@@ -13,7 +13,9 @@ import {
 } from "../../redux/user/userSlice";
 
 export default function Orders() {
-  const { _id } = useSelector((state) => state.user.currentUser);
+  const { currentUser } = useSelector((state) => state.user);
+  const { _id } = currentUser || {};
+
   const [bookings, setBookings] = useState("");
   const dispatch = useDispatch();
 
@@ -133,7 +135,7 @@ export default function Orders() {
                           </div>
                           <div className="space-y-2">
                             <div className="flex items-center gap-3 text-sm font-bold text-slate-300">
-                              <HiOutlineLocationMarker className="text-emerald-500" />
+                               <HiOutlineMapPin className="text-emerald-500" />
                               <span className="capitalize">{cur.bookingDetails.pickUpLocation}</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm font-medium text-slate-400">
@@ -154,7 +156,7 @@ export default function Orders() {
                           </div>
                           <div className="space-y-2">
                             <div className="flex items-center gap-3 text-sm font-bold text-slate-300">
-                              <HiOutlineLocationMarker className="text-blue-500" />
+                              <HiOutlineMapPin className="text-blue-500" />
                               <span className="capitalize">{cur.bookingDetails.dropOffLocation}</span>
                             </div>
                             <div className="flex items-center gap-3 text-sm font-medium text-slate-400">

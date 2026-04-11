@@ -1,9 +1,6 @@
 import { useState } from "react";
 import Modal from "../../components/CustomModal";
 import { TbEditCircle } from "react-icons/tb";
-
-//mui
-
 import TextField from "@mui/material/TextField";
 import { useDispatch, useSelector } from "react-redux";
 import { editUserProfile, setUpdated } from "../../redux/user/userSlice";
@@ -11,16 +8,15 @@ import { useForm } from "react-hook-form";
 
 const ProfileEdit = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { username, email, phoneNumber, adress, _id } = useSelector(
-    (state) => state.user.currentUser
-  );
+  const { currentUser } = useSelector((state) => state.user);
+  const { username, email, phoneNumber, adress, _id } = currentUser || {};
 
   const dispatch = useDispatch();
   const { register, handleSubmit } = useForm();
 
   const editProfileData = async (data, id) => {
     try {
-      if (data) {
+      if (data && id) {
         const formData = data;
         dispatch(editUserProfile({ ...formData }));
         await fetch(`/api/user/editUserProfile/${id}`, {
@@ -30,7 +26,6 @@ const ProfileEdit = () => {
           },
           body: JSON.stringify({ formData }),
         });
-        // dispatch(editUserProfile(null));
         dispatch(setUpdated(true));
       }
     } catch (error) {
@@ -38,77 +33,121 @@ const ProfileEdit = () => {
     }
   };
 
+  if (!currentUser) return null;
+
   return (
     <>
-      <button type="button" className="" onClick={() => setIsModalOpen(true)}>
-        <TbEditCircle />
+      <button 
+        type="button" 
+        className="flex h-8 w-8 items-center justify-center text-white bg-emerald-500 rounded-full hover:bg-emerald-400 transition-colors shadow-lg" 
+        onClick={() => setIsModalOpen(true)}
+      >
+        <TbEditCircle size={18} />
       </button>
 
       <Modal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
-        className="bg-white mt-10 rounded-md max-w-[600px] min-w-[360px]"
+        className="bg-slate-900 border border-white/10 rounded-3xl max-w-[500px] w-full p-0 overflow-hidden shadow-2xl backdrop-blur-xl"
       >
         <form onSubmit={handleSubmit((data) => editProfileData(data, _id))}>
           <div className="p-8">
-            <h2 className="font-bold">Make changes to your profile</h2>
-            {/* mui components */}
+            <h2 className="text-2xl font-black text-white mb-2 uppercase tracking-tight">Edit Profile</h2>
+            <p className="text-xs text-slate-500 font-bold uppercase tracking-widest mb-8">Update your personal details</p>
 
-            <div className="flex flex-col mx-auto md:min-w-[500px]  gap-10 my-10">
+            <div className="flex flex-col gap-6">
               <TextField
                 id="username"
-                label="Name"
+                label="Full Name"
                 variant="outlined"
+                fullWidth
                 {...register("username")}
                 defaultValue={username}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+                    '&:hover fieldset': { borderColor: '#10b981' },
+                    '&.Mui-focused fieldset': { borderColor: '#10b981' },
+                  },
+                  '& .MuiInputLabel-root': { color: '#64748b' },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' },
+                }}
               />
 
               <TextField
                 id="email"
-                label="Email"
+                label="Email Address"
                 variant="outlined"
+                fullWidth
                 defaultValue={email}
                 {...register("email")}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+                    '&:hover fieldset': { borderColor: '#10b981' },
+                    '&.Mui-focused fieldset': { borderColor: '#10b981' },
+                  },
+                  '& .MuiInputLabel-root': { color: '#64748b' },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' },
+                }}
               />
               <TextField
                 id="phoneNumber"
-                label="Phone"
-                type="Number"
+                label="Phone Number"
+                type="text"
                 variant="outlined"
+                fullWidth
                 defaultValue={phoneNumber}
                 {...register("phoneNumber")}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+                    '&:hover fieldset': { borderColor: '#10b981' },
+                    '&.Mui-focused fieldset': { borderColor: '#10b981' },
+                  },
+                  '& .MuiInputLabel-root': { color: '#64748b' },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' },
+                }}
               />
 
               <TextField
                 id="adress"
-                label="Multiline"
+                label="Living Address"
                 multiline
-                rows={4}
+                rows={3}
+                fullWidth
                 defaultValue={adress}
                 {...register("adress")}
+                sx={{
+                  '& .MuiOutlinedInput-root': {
+                    color: 'white',
+                    '& fieldset': { borderColor: 'rgba(255,255,255,0.1)' },
+                    '&:hover fieldset': { borderColor: '#10b981' },
+                    '&.Mui-focused fieldset': { borderColor: '#10b981' },
+                  },
+                  '& .MuiInputLabel-root': { color: '#64748b' },
+                  '& .MuiInputLabel-root.Mui-focused': { color: '#10b981' },
+                }}
               />
             </div>
 
-            {/* mui text feild end here */}
-
-            <div className="flex justify-end items-center gap-x-2">
+            <div className="mt-10 flex justify-end items-center gap-3">
               <button
                 type="button"
-                className="w-[100px] rounded-sm text-white bg-red-500 p-2"
-                onClick={() => {
-                  setIsModalOpen(false);
-                }}
+                className="rounded-xl px-6 py-3 text-sm font-bold text-slate-400 hover:bg-white/5 transition-colors"
+                onClick={() => setIsModalOpen(false)}
               >
-                Close
+                Cancel
               </button>
               <button
                 type="submit"
-                className="w-[100px] rounded-sm text-white bg-green-500 p-2"
-                onClick={() => {
-                  setIsModalOpen(false);
-                }}
+                className="rounded-xl bg-emerald-500 px-8 py-3 text-sm font-black text-slate-950 shadow-lg shadow-emerald-500/20 hover:bg-emerald-400 transition-all active:scale-95"
+                onClick={() => setIsModalOpen(false)}
               >
-                save
+                Save Changes
               </button>
             </div>
           </div>

@@ -11,8 +11,8 @@ import {
   HiOutlineShieldCheck, 
   HiOutlineClock, 
   HiOutlineCalendar,
-  HiOutlineLocationMarker
-} from "react-icons/hi";
+  HiOutlineMapPin
+} from "react-icons/hi2";
 import { 
   GiGearStickPattern, 
   GiCarDoor, 
@@ -187,7 +187,7 @@ const VehicleDetails = () => {
                  <div className="space-y-2">
                     <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Pick-up Location</label>
                     <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-slate-800/50 p-4 transition-all hover:border-emerald-500/30">
-                       <HiOutlineLocationMarker className="text-emerald-500" />
+                       <HiOutlineMapPin className="text-emerald-500" />
                        <span className="text-sm font-medium">Main Showroom, MG Road</span>
                     </div>
                  </div>

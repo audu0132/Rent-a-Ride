@@ -1,15 +1,15 @@
-import { useDispatch, useSelector } from "react-redux";
+import { useSelector, useDispatch } from "react-redux";
 import ProfileEdit from "../pages/user/ProfileEdit";
 import toast, { Toaster } from "react-hot-toast";
 import { setUpdated } from "../redux/user/userSlice";
 import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { HiOutlineMail, HiOutlinePhone, HiOutlineLocationMarker, HiOutlineShieldCheck } from "react-icons/hi";
+import { HiOutlineEnvelope, HiOutlinePhone, HiOutlineMapPin, HiOutlineShieldCheck } from "react-icons/hi2";
 
 const UserProfileContent = () => {
-  const { email, username, profilePicture, phoneNumber, adress } = useSelector(
-    (state) => state.user.currentUser
-  );
+  const { currentUser } = useSelector((state) => state.user);
+  const { email, username, profilePicture, phoneNumber, adress } = currentUser || {};
+  
   const dispatch = useDispatch();
   const isUpdated = useSelector((state) => state.user.isUpdated);
   
@@ -41,6 +41,14 @@ const UserProfileContent = () => {
     visible: { opacity: 1, x: 0 }
   };
 
+  if (!currentUser) {
+    return (
+      <div className="flex min-h-[400px] items-center justify-center rounded-[2.5rem] border border-white/5 bg-slate-900/40">
+        <p className="text-slate-500 font-bold">Session expired. Please sign in again.</p>
+      </div>
+    );
+  }
+
   return (
     <motion.div 
       variants={containerVariants}
@@ -66,7 +74,7 @@ const UserProfileContent = () => {
             <div className="relative -mt-16 inline-block">
               <div className="h-32 w-32 overflow-hidden rounded-[2rem] border-4 border-slate-950 bg-slate-900 shadow-2xl transition-transform hover:scale-105">
                 <img
-                  src={profilePicture}
+                  src={profilePicture || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png"}
                   alt={username}
                   className="h-full w-full object-cover"
                 />
@@ -93,7 +101,7 @@ const UserProfileContent = () => {
               {username}
             </motion.h3>
             <motion.div variants={itemVariants} className="mt-2 flex items-center gap-2 text-slate-500 font-semibold uppercase tracking-widest text-xs">
-              <HiOutlineMail size={14} className="text-emerald-500" />
+              <HiOutlineEnvelope size={14} className="text-emerald-500" />
               {email}
             </motion.div>
           </div>
@@ -126,7 +134,7 @@ const UserProfileContent = () => {
               >
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-emerald-500 shadow-inner group-hover:bg-emerald-500 group-hover:text-white transition-colors">
-                    <HiOutlineLocationMarker size={20} />
+                    <HiOutlineMapPin size={20} />
                   </div>
                   <span className="text-xs font-bold uppercase tracking-widest text-slate-500">Living Address</span>
                 </div>

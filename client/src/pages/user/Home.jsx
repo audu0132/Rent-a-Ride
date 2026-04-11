@@ -1,9 +1,10 @@
 import { useRef, useEffect } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { setIsSweetAlert } from "../../redux/user/userSlice";
+
 
 // Components
 import CarSearch from "./CarSearch";
@@ -24,7 +25,6 @@ const Home = () => {
   // Scroll animations for Hero
   const { scrollY } = useScroll();
   const y1 = useTransform(scrollY, [0, 500], [0, 200]);
-  const opacity = useTransform(scrollY, [0, 500], [1, 0]);
 
   useEffect(() => {
     if (isSweetAlert) {
@@ -55,15 +55,14 @@ const Home = () => {
   };
 
   return (
-    <div className="bg-slate-950 text-white selection:bg-emerald-500/30">
+    <div className="bg-slate-950 text-white selection:bg-emerald-500/30 w-full min-h-screen relative">
       {/* --- PREMIUM CINEMATIC HERO --- */}
-      <section className="relative min-h-[110vh] w-full overflow-hidden flex items-center pt-20">
+      <section className="relative min-h-[110vh] w-full flex items-center pt-20">
         {/* Background Image Layer */}
         <motion.div 
           style={{ y: y1 }}
-          className="absolute inset-0 z-0"
+          className="absolute inset-0 z-0 pointer-events-none"
         >
-          {/* Main Hero Image */}
           <motion.img 
             initial={{ scale: 1.1 }}
             animate={{ scale: 1 }}
@@ -73,23 +72,20 @@ const Home = () => {
             className="h-full w-full object-cover object-center brightness-[0.7]"
           />
           
-          {/* Overlays for Depth & Cinema */}
           <div className="absolute inset-0 bg-gradient-to-b from-slate-950/80 via-slate-950/40 to-slate-950 z-10" />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-950 via-transparent to-slate-950/40 z-10 hidden lg:block" />
           <div className="absolute inset-0 radial-vignette z-10" style={{ 
             background: 'radial-gradient(circle, transparent 20%, rgba(2, 6, 23, 0.8) 100%)' 
           }} />
           
-          {/* Background Glows */}
           <div className="absolute top-1/4 -left-20 h-[500px] w-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none" />
           <div className="absolute bottom-1/4 -right-20 h-[500px] w-[500px] bg-cyan-500/10 rounded-full blur-[120px] pointer-events-none" />
         </motion.div>
 
         {/* Content Container */}
-        <div className="relative z-20 w-full px-6 lg:px-24 flex flex-col items-center lg:items-start">
+        <div className="relative z-20 w-full px-6 lg:px-24 flex flex-col items-center lg:items-start py-12">
           <div className="max-w-7xl w-full grid lg:grid-cols-2 gap-16 items-center">
             
-            {/* Text Content */}
             <motion.div
               initial={{ opacity: 0, x: -50 }}
               animate={{ opacity: 1, x: 0 }}
@@ -100,9 +96,9 @@ const Home = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.2 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/5 backdrop-blur-md mb-6"
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/5 backdrop-blur-md mb-6 shadow-[0_0_20px_rgba(16,185,129,0.1)]"
               >
-                <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+                <div className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
                 <span className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-400">
                   The Gold Standard of Car Rentals
                 </span>
@@ -112,10 +108,10 @@ const Home = () => {
                 initial={{ opacity: 0, y: 30 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.3, duration: 1 }}
-                className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tight mb-8"
+                className="text-5xl md:text-7xl lg:text-8xl font-black leading-[0.95] tracking-tight mb-8 text-white"
               >
                 Drive Your <br />
-                <span className="bg-gradient-to-r from-emerald-400 via-emerald-300 to-cyan-400 bg-clip-text text-transparent">
+                <span className="bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
                   Dream.
                 </span>
               </motion.h1>
@@ -144,6 +140,7 @@ const Home = () => {
                   <HiArrowNarrowRight size={20} className="transition-transform group-hover:translate-x-1" />
                 </button>
                 <button 
+                  onClick={() => navigate("/vehicles")}
                   className="rounded-2xl border border-white/10 bg-white/5 px-8 py-5 font-bold backdrop-blur-xl transition-all hover:bg-white/10 hover:border-white/30"
                 >
                   Explore Collections
@@ -151,7 +148,6 @@ const Home = () => {
               </motion.div>
             </motion.div>
 
-            {/* Floating Search Card */}
             <div ref={searchRef} className="w-full relative group">
               <div className="absolute -inset-1 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-[2.2rem] blur-2xl opacity-50 group-hover:opacity-100 transition duration-1000" />
               <CarSearch />
@@ -164,7 +160,7 @@ const Home = () => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5, duration: 1 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 opacity-50"
+          className="absolute bottom-10 left-1/2 -translate-x-1/2 z-20 flex flex-col items-center gap-3 opacity-50 pointer-events-none"
         >
           <div className="w-[1px] h-12 bg-gradient-to-b from-transparent to-emerald-500" />
           <span className="text-[10px] uppercase tracking-[0.4em] font-bold text-emerald-500">Scroll</span>
@@ -172,7 +168,7 @@ const Home = () => {
       </section>
 
       {/* --- WHY CHOOSE US --- */}
-      <section className="py-32 px-6 lg:px-24 relative">
+      <section className="py-32 px-6 lg:px-24 relative overflow-visible">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-4/5 h-[1px] bg-gradient-to-r from-transparent via-white/5 to-transparent" />
         
         <motion.div 
@@ -217,12 +213,12 @@ const Home = () => {
       </section>
 
       {/* --- PARALLAX SHOWCASE --- */}
-      <section className="bg-slate-900/10">
+      <section className="relative w-full overflow-visible py-20">
         <HeroParallax />
       </section>
 
       {/* --- START YOUR JOURNEY --- */}
-      <section className="py-32 px-6 lg:px-24">
+      <section className="py-32 px-6 lg:px-24 relative overflow-visible">
         <div className="text-center mb-24">
           <h2 className="text-5xl font-black font-heading md:text-6xl tracking-tight">Experience Excellence</h2>
           <p className="mt-6 text-slate-400 text-xl max-w-2xl mx-auto italic font-medium">Simple steps to get you behind the wheel of greatness</p>
@@ -254,7 +250,7 @@ const Home = () => {
       </section>
 
       {/* --- CALL TO ACTION --- */}
-      <section className="py-24 px-6 lg:px-24 relative overflow-hidden">
+      <section className="py-24 px-6 lg:px-24 relative overflow-visible">
         <div className="absolute top-0 right-0 w-[600px] h-[600px] bg-emerald-500/10 rounded-full blur-[150px] -mr-300" />
         
         <motion.div 
@@ -281,7 +277,7 @@ const Home = () => {
             className="absolute -bottom-40 -right-40 h-[600px] w-[600px] rounded-full bg-slate-950 blur-[100px]" 
           />
 
-          <h2 className="relative z-10 font-heading text-5xl font-black text-white md:text-7xl tracking-tighter leading-none mb-8">
+          <h2 className="relative z-10 font-heading text-5xl font-black text-white md:text-7xl tracking-tighter leading-none mb-8 uppercase">
             READY TO REDEFINE <br /> YOUR ROAD?
           </h2>
           <p className="relative z-10 mt-6 text-emerald-50/80 max-w-2xl mx-auto text-xl font-medium leading-relaxed mb-12">
@@ -289,10 +285,16 @@ const Home = () => {
             deserves a vehicle that matches your ambition.
           </p>
           <div className="relative z-10 flex flex-wrap justify-center gap-6">
-            <button className="rounded-2xl bg-slate-950 px-12 py-5 font-black text-white transition-all hover:scale-105 active:scale-95 shadow-[0_20px_40px_rgba(0,0,0,0.3)]">
+            <button 
+              onClick={() => navigate("/signin")}
+              className="rounded-2xl bg-slate-950 px-12 py-5 font-black text-white transition-all hover:scale-105 active:scale-95 shadow-[0_20px_40px_rgba(0,0,0,0.3)]"
+            >
               Get Started Now
             </button>
-            <button className="rounded-2xl border-2 border-emerald-400/50 bg-transparent px-12 py-5 font-black text-white hover:bg-emerald-500 transition-all uppercase tracking-widest text-sm">
+            <button 
+              onClick={() => navigate("/vehicles")}
+              className="rounded-2xl border-2 border-emerald-400/50 bg-transparent px-12 py-5 font-black text-white hover:bg-emerald-500 transition-all uppercase tracking-widest text-sm"
+            >
               View Fleet
             </button>
           </div>

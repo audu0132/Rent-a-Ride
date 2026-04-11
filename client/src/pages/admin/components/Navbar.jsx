@@ -1,12 +1,26 @@
 import { useState } from "react";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
+import { useSelector, useDispatch } from "react-redux";
 import { HiOutlineMenuAlt3, HiOutlineX } from "react-icons/hi";
 import { FaUserCircle } from "react-icons/fa";
 import { motion, AnimatePresence } from "framer-motion";
 import { navLinks } from "../../../constants";
+import { signOut } from "../../../redux/user/userSlice";
 
 const Navbar = () => {
   const [toggle, setToggle] = useState(false);
+  const { currentUser } = useSelector((state) => state.user);
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+
+  const handleAuthClick = () => {
+    if (currentUser) {
+      dispatch(signOut());
+      navigate("/signin");
+    } else {
+      navigate("/signin");
+    }
+  };
 
   return (
     <motion.header
@@ -64,14 +78,20 @@ const Navbar = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.96 }}
-            className="rounded-full border border-white/10 bg-white/5 px-5 py-2 text-sm font-semibold text-white transition-all duration-300 hover:bg-white/10"
+            onClick={handleAuthClick}
+            className={`rounded-full border border-white/10 bg-white/5 px-6 py-2.5 text-sm font-bold transition-all duration-300 ${
+              currentUser 
+                ? "text-red-400 hover:bg-red-500/10 hover:border-red-500/30" 
+                : "text-white hover:bg-emerald-500/10 hover:border-emerald-500/30 hover:text-emerald-400 shadow-lg shadow-emerald-500/5"
+            }`}
           >
-            Sign In
+            {currentUser ? "Logout" : "Sign In"}
           </motion.button>
 
           <motion.button
             whileHover={{ scale: 1.08, y: -2 }}
             whileTap={{ scale: 0.95 }}
+            onClick={() => navigate("/profile")}
             className="flex h-12 w-12 items-center justify-center rounded-full border border-green-400/30 bg-green-500/10 text-green-400 shadow-lg shadow-green-500/10 transition-all duration-300 hover:bg-green-500/20"
           >
             <FaUserCircle className="text-2xl" />
@@ -127,9 +147,17 @@ const Navbar = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.97 }}
-                className="mt-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-semibold text-white"
+                onClick={() => {
+                  handleAuthClick();
+                  setToggle(false);
+                }}
+                className={`mt-2 rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-left text-sm font-bold transition-all duration-300 ${
+                  currentUser 
+                    ? "text-red-400 hover:bg-red-500/10" 
+                    : "text-white hover:bg-emerald-500/10 hover:text-emerald-400"
+                }`}
               >
-                Sign In
+                {currentUser ? "Logout" : "Sign In"}
               </motion.button>
             </div>
           </motion.div>

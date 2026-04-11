@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { HiOutlineLocationMarker, HiCalendar, HiSearch } from "react-icons/hi";
+// ✅ Fixed: Upgraded to hi2 and replaced missing exports
+import { HiOutlineMapPin, HiOutlineCalendar, HiMagnifyingGlass } from "react-icons/hi2";
 
 const locationData = {
   Maharashtra: ["Pune", "Mumbai", "Nagpur", "Nashik"],
@@ -62,7 +63,7 @@ export default function CarSearch() {
             Pick-up State
           </label>
           <div className="relative">
-            <HiOutlineLocationMarker className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500" />
+            <HiOutlineMapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500" />
             <select
               className="w-full appearance-none rounded-xl border border-white/10 bg-slate-800/50 p-4 pl-12 text-sm text-white outline-none transition-all focus:border-emerald-500/50 focus:bg-slate-800/80"
               value={stateName}
@@ -88,7 +89,7 @@ export default function CarSearch() {
             Pick-up City
           </label>
           <div className="relative">
-            <HiOutlineLocationMarker className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500" />
+            <HiOutlineMapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500" />
             <select
               className="w-full appearance-none rounded-xl border border-white/10 bg-slate-800/50 p-4 pl-12 text-sm text-white outline-none transition-all focus:border-emerald-500/50 focus:bg-slate-800/80 disabled:opacity-50"
               value={city}
@@ -112,7 +113,7 @@ export default function CarSearch() {
             Drop-off City
           </label>
           <div className="relative">
-            <HiOutlineLocationMarker className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500" />
+            <HiOutlineMapPin className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500" />
             <select
               className="w-full appearance-none rounded-xl border border-white/10 bg-slate-800/50 p-4 pl-12 text-sm text-white outline-none transition-all focus:border-emerald-500/50 focus:bg-slate-800/80 disabled:opacity-50"
               value={dropCity}
@@ -136,7 +137,7 @@ export default function CarSearch() {
             Pickup Date & Time
           </label>
           <div className="relative">
-            <HiCalendar className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500" />
+            <HiOutlineCalendar className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500" />
             <input
               type="datetime-local"
               className="w-full rounded-xl border border-white/10 bg-slate-800/50 p-4 pl-12 text-sm text-white outline-none transition-all focus:border-emerald-500/50 focus:bg-slate-800/80 [color-scheme:dark]"
@@ -151,7 +152,7 @@ export default function CarSearch() {
             Return Date & Time
           </label>
           <div className="relative">
-            <HiCalendar className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500" />
+            <HiOutlineCalendar className="absolute left-4 top-1/2 -translate-y-1/2 text-emerald-500" />
             <input
               type="datetime-local"
               className="w-full rounded-xl border border-white/10 bg-slate-800/50 p-4 pl-12 text-sm text-white outline-none transition-all focus:border-emerald-500/50 focus:bg-slate-800/80 [color-scheme:dark]"
@@ -169,7 +170,7 @@ export default function CarSearch() {
             onClick={handleSearch}
             className="group flex w-full items-center justify-center gap-3 rounded-xl bg-emerald-500 p-4 font-black uppercase tracking-widest text-slate-950 transition-all hover:bg-emerald-400"
           >
-            <HiSearch className="text-xl transition-transform group-hover:scale-110" />
+            <HiMagnifyingGlass className="text-xl transition-transform group-hover:scale-110" />
             Search Vehicles
           </motion.button>
         </div>

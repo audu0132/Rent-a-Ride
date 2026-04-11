@@ -25,18 +25,17 @@ const UserProfileSidebar = () => {
   const dispatch = useDispatch();
 
   const handleSignout = async () => {
-    const res = await fetch("/api/admin/signout", {
-      method: "GET",
-      credentials: 'include'
-    });
-    const data = await res.json();
-    if (data) {
+    try {
+      // Use the existing signOut action which cleared the state in your legacy code
       dispatch(signOut());
       navigate("/signin");
+    } catch (error) {
+      console.error("Signout error", error);
     }
   };
 
   const handleDelete = async () => {
+    if (!currentUser?._id) return;
     try {
       dispatch(deleteUserStart());
       const res = await fetch(`/api/user/delete/${currentUser._id}`, {
@@ -58,16 +57,8 @@ const UserProfileSidebar = () => {
     hidden: { opacity: 0 },
     visible: {
       opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2
-      }
+      transition: { staggerChildren: 0.1, delayChildren: 0.2 }
     }
-  };
-
-  const itemVariants = {
-    hidden: { opacity: 0, x: -20 },
-    visible: { opacity: 1, x: 0 }
   };
 
   return (
@@ -76,12 +67,14 @@ const UserProfileSidebar = () => {
       <div className="mb-12 flex items-center justify-between">
         <Link
           to="/"
-          className="flex items-center gap-3 transition-transform hover:scale-105"
+          className="group flex items-center gap-3 transition-transform hover:scale-105"
         >
-          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-[0_0_20px_rgba(16,185,129,0.3)]">
-            <SiShopware size={24} />
+          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600 text-slate-950 shadow-[0_0_20px_rgba(16,185,129,0.3)] font-black">
+            R
           </div>
-          <span className="text-xl font-black tracking-tight text-white font-heading">Rent a Ride</span>
+          <span className="text-xl font-black tracking-tighter text-white font-heading">
+            Rent<span className="text-emerald-500">a</span>Ride
+          </span>
         </Link>
         
         <button
@@ -94,7 +87,7 @@ const UserProfileSidebar = () => {
 
       {/* User Profile Summary */}
       <div className="mb-10 flex items-center gap-4 border-b border-white/5 pb-10">
-        <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-white/10">
+        <div className="relative h-14 w-14 overflow-hidden rounded-2xl border border-white/10 bg-slate-900">
           <img 
             src={currentUser?.profilePicture || "https://cdn.pixabay.com/photo/2015/10/05/22/37/blank-profile-picture-973460_960_720.png"} 
             alt="Profile" 
@@ -103,7 +96,9 @@ const UserProfileSidebar = () => {
         </div>
         <div className="flex-1 overflow-hidden">
           <h4 className="truncate text-sm font-bold text-white">{currentUser?.username || "Luxury Member"}</h4>
-          <p className="truncate text-xs font-semibold text-slate-500 uppercase tracking-widest">{currentUser?.email?.split('@')[0] || "Standard Tier"}</p>
+          <p className="truncate text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1">
+            {currentUser?.email?.split('@')[0] || "Standard Tier"}
+          </p>
         </div>
       </div>
 
@@ -116,7 +111,7 @@ const UserProfileSidebar = () => {
       >
         {links.map((section, sIdx) => (
           <div key={sIdx} className="mb-8">
-            <h5 className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.2em] text-slate-600">
+            <h5 className="mb-4 px-4 text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">
               {section.title || "Dashboard"}
             </h5>
             <div className="space-y-1">
@@ -130,19 +125,23 @@ const UserProfileSidebar = () => {
                   className={({ isActive }) => `
                     group flex items-center gap-4 rounded-2xl px-4 py-3.5 text-sm font-bold transition-all
                     ${isActive 
-                      ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20" 
+                      ? "bg-emerald-500/10 text-emerald-500 border border-emerald-500/20 shadow-[inset_0_0_20px_rgba(16,185,129,0.05)]" 
                       : "text-slate-400 hover:bg-white/5 hover:text-white border border-transparent"
                     }
                   `}
                 >
-                  <span className="text-lg opacity-70 group-hover:scale-110 transition-transform">{link.icon}</span>
-                  <span className="capitalize">{link.name}</span>
-                  {/* Active Indicator Glimmer */}
-                  {({ isActive }) => isActive && (
-                    <motion.div 
-                      layoutId="activeIndicator"
-                      className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
-                    />
+                  {({ isActive }) => (
+                    <>
+                      <span className="text-lg opacity-70 group-hover:scale-110 transition-transform">{link.icon}</span>
+                      <span className="capitalize tracking-tight">{link.name}</span>
+                      {/* Active Indicator Glimmer */}
+                      {isActive && (
+                        <motion.div 
+                          layoutId="activeIndicator"
+                          className="ml-auto h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                        />
+                      )}
+                    </>
                   )}
                 </NavLink>
               ))}
@@ -156,20 +155,20 @@ const UserProfileSidebar = () => {
         <motion.button
           whileHover={{ x: 5 }}
           onClick={handleSignout}
-          className="flex w-full items-center gap-4 px-4 py-3 text-sm font-bold text-slate-400 transition-colors hover:text-rose-400"
+          className="flex w-full items-center gap-4 px-4 py-3 text-sm font-bold text-slate-500 transition-colors hover:text-rose-400"
         >
           <HiOutlineLogout size={20} className="opacity-70" />
-          <span>Sign Out</span>
+          <span className="uppercase tracking-widest text-[11px] font-black">Sign Out</span>
         </motion.button>
         
         <motion.button
           whileHover={{ x: 5 }}
           onClick={handleDelete}
           disabled={isLoading}
-          className="flex w-full items-center gap-4 px-4 py-3 text-sm font-bold text-slate-600 transition-colors hover:text-rose-600 disabled:opacity-50"
+          className="flex w-full items-center gap-4 px-4 py-3 text-sm font-bold text-slate-800 transition-colors hover:text-rose-600 disabled:opacity-50"
         >
           <HiOutlineTrash size={20} className="opacity-70" />
-          <span>{isLoading ? "Deleting..." : "Delete Account"}</span>
+          <span className="uppercase tracking-widest text-[11px] font-black">{isLoading ? "Deleting..." : "Delete Account"}</span>
         </motion.button>
       </div>
     </div>

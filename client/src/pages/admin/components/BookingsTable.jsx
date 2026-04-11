@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { HiOutlineLocationMarker, HiOutlineCalendar, HiOutlineStatusOnline } from "react-icons/hi";
+import { HiOutlineCalendar, HiOutlineStatusOnline } from "react-icons/hi";
 
 const BookingsTable = () => {
   const [bookings, setBookings] = useState([]);

@@ -1,5 +1,6 @@
+/* Corrected Profile.jsx */
 import { useSelector, useDispatch } from "react-redux";
-import { Link, Route, Routes } from "react-router-dom";
+import { Link, Route, Routes, Navigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineArrowLeft, HiMenuAlt2 } from "react-icons/hi";
 
@@ -13,21 +14,27 @@ import Favorites from "./Favorites";
 import { showSidebarOrNot } from "../../redux/adminSlices/adminDashboardSlice/DashboardSlice";
 
 function Profile() {
-  const { isError } = useSelector((state) => state.user);
+  const { currentUser, isError } = useSelector((state) => state.user);
   const { activeMenu } = useSelector((state) => state.adminDashboardSlice);
   const dispatch = useDispatch();
 
+  // If no user is logged in, redirect to signin
+  if (!currentUser) {
+    return <Navigate to="/signin" replace />;
+  }
+
   return (
-    <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden">
+    <div className="min-h-screen bg-slate-950 text-white overflow-x-hidden selection:bg-emerald-500/30">
       {/* Background Decor */}
-      <div className="fixed top-0 left-0 -z-10 h-[500px] w-[500px] rounded-full bg-emerald-500/5 blur-[120px]" />
-      <div className="fixed bottom-0 right-0 -z-10 h-[500px] w-[600px] rounded-full bg-blue-500/5 blur-[150px]" />
+      <div className="fixed top-0 left-0 -z-10 h-[500px] w-[500px] rounded-full bg-emerald-500/5 blur-[120px] pointer-events-none" />
+      <div className="fixed bottom-0 right-0 -z-10 h-[500px] w-[600px] rounded-full bg-blue-500/5 blur-[150px] pointer-events-none" />
 
       <div className="relative flex min-h-screen">
         {/* Sidebar Container */}
         <AnimatePresence mode="wait">
           {activeMenu ? (
             <motion.aside
+              key="sidebar"
               initial={{ x: -300, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               exit={{ x: -300, opacity: 0 }}
@@ -57,14 +64,14 @@ function Profile() {
                 </motion.button>
               )}
               <div>
-                <h2 className="text-sm font-bold uppercase tracking-widest text-emerald-500">Account Dashboard</h2>
-                <h1 className="text-2xl font-black font-heading text-white">Owner Portal</h1>
+                <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-emerald-500">Premium Account</h2>
+                <h1 className="text-2xl font-black font-heading text-white tracking-tight">Member Portal</h1>
               </div>
             </div>
 
             <Link
               to="/"
-              className="group flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-6 py-3 font-bold transition-all hover:bg-white/10 hover:border-emerald-500/30"
+              className="group flex items-center gap-2 rounded-2xl border border-white/10 bg-white/5 px-6 py-3 font-bold transition-all hover:bg-white/10 hover:border-emerald-500/30 shadow-lg"
             >
               <HiOutlineArrowLeft className="text-slate-400 group-hover:text-emerald-500 transition-colors" />
               <span className="hidden sm:inline">Back to Home</span>
@@ -79,22 +86,24 @@ function Profile() {
                   initial={{ opacity: 0, y: -20 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, y: -20 }}
-                  className="mb-8 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm font-medium text-rose-500"
+                  className="mb-8 rounded-2xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm font-medium text-rose-500 flex items-center gap-3"
                 >
-                   {isError.message}
+                   <div className="h-2 w-2 rounded-full bg-rose-500 animate-pulse" />
+                   {typeof isError === 'object' ? isError.message : isError}
                 </motion.div>
               )}
             </AnimatePresence>
 
             {/* Content Wrapper */}
             <motion.div
+              layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
               className="mx-auto max-w-6xl"
             >
-              <div className="rounded-[2.5rem] border border-white/5 bg-slate-900/30 p-1 backdrop-blur-sm">
-                <div className="rounded-[2.2rem] bg-slate-950/20 p-6 sm:p-10">
+              <div className="rounded-[3rem] border border-white/5 bg-slate-900/20 p-2 backdrop-blur-sm shadow-2xl">
+                <div className="rounded-[2.8rem] bg-slate-950/40 p-4 sm:p-10 border border-white/5">
                   <Routes>
                     <Route path="/" element={<UserProfileContent />} />
                     <Route path="/profiles" element={<UserProfileContent />} />
