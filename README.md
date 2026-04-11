@@ -21,10 +21,16 @@ The system is divided into three distinct orchestration layers, each tailored fo
 - **Lifecycle Management**: Real-time status tracking (On-Trip, Overdue, Cancelled).
 - **Vendor Governance**: KYC-style approval/rejection workflows for third-party partners.
 
+<<<<<<< HEAD
 ### 💼 Vendor Partnership (Vendor)
 - **Digital Storefront**: Dedicated portal for vehicle listing and inventory management.
 - **Inventory Sync**: Automated synchronization with admin approval queues.
 - **Order Insights**: Detailed tracking of user demand for specific fleet models.
+=======
+```bash
+https://github.com/audu0132/Rent-a-Ride.git
+```
+>>>>>>> d14116353f16c73279d30594ac8dde9a005bc87b
 
 ---
 
