@@ -8,6 +8,11 @@ const expireDate = new Date(Date.now() + 3600000);
 
 export const vendorSignup = async (req, res, next) => {
   const { username, email, password } = req.body;
+  
+  if (!username || !email || !password) {
+    return next(errorHandler(400, "All fields are required"));
+  }
+
   try {
     const hadshedPassword = bcryptjs.hashSync(password, 10);
     const user = await User.create({
@@ -16,15 +21,20 @@ export const vendorSignup = async (req, res, next) => {
       email,
       isVendor: true,
     });
-    await user.save();
     res.status(200).json({ message: "vendor created successfully" });
   } catch (error) {
+    console.error("VENDOR SIGNUP ERROR:", error);
     next(error);
   }
 };
 
 export const vendorSignin = async (req, res, next) => {
   const { email, password } = req.body;
+
+  if (!email || !password) {
+    return next(errorHandler(400, "Email and password are required"));
+  }
+
   try {
     const validVendor = await User.findOne({ email }).lean();
     if (!validVendor || !validVendor.isVendor) {
@@ -47,6 +57,7 @@ export const vendorSignin = async (req, res, next) => {
       .status(200)
       .json(rest);
   } catch (error) {
+    console.error("VENDOR SIGNIN ERROR:", error);
     next(error);
   }
 };
@@ -66,8 +77,14 @@ export const vendorSignout = async (req, res, next) => {
 //vendor login or signup with google
 
 export const vendorGoogle = async (req, res, next) => {
+  const { email, name, photo } = req.body;
+
+  if (!email || !name) {
+    return next(errorHandler(400, "Email and name are required for Google authentication"));
+  }
+
   try {
-    const user = await User.findOne({ email: req.body.email }).lean();
+    const user = await User.findOne({ email }).lean();
     if (user && user.isVendor) {
       const { password: hashedPassword, ...rest } = user;
       const token = Jwt.sign({ id: user._id }, process.env.ACCESS_TOKEN);
@@ -85,13 +102,13 @@ export const vendorGoogle = async (req, res, next) => {
         Math.random().toString(36).slice(-8); //we are generating a random password since there is no password in result
       const hashedPassword = bcryptjs.hashSync(generatedPassword, 10);
       const newUser = new User({
-        profilePicture: req.body.photo,
+        profilePicture: photo,
         password: hashedPassword,
         username:
-          req.body.name.split(" ").join("").toLowerCase() +
+          name.split(" ").join("").toLowerCase() +
           Math.random().toString(36).slice(-8) +
           Math.random().toString(36).slice(-8),
-        email: req.body.email,
+        email: email,
         isVendor:true,
         //we cannot set username to req.body.name because other user may also have same name so we generate a random value and concat it to name
         //36 in toString(36) means random value from 0-9 and a-z
@@ -111,6 +128,7 @@ export const vendorGoogle = async (req, res, next) => {
         .json(rest);
       }
       catch(error){
+        console.error("VENDOR GOOGLE SAVE ERROR:", error);
         if(error.code === 11000){
           return next(errorHandler(409,"email already in use"))
         }
@@ -119,6 +137,7 @@ export const vendorGoogle = async (req, res, next) => {
      
     }
   } catch (error) {
+    console.error("VENDOR GOOGLE ERROR:", error);
     next(error);
   }
 };

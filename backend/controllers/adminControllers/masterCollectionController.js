@@ -102,7 +102,8 @@ const dummyData = [
             res.status(201).json(availableVehicleModels)
     }
     catch(error){
-        next(errorHandler(500,{'could not get model Data':error}))
+        console.error("GET VEHICLE MODELS ERROR:", error);
+        next(errorHandler(500, "could not get model Data"));
     }
   }
   

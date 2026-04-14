@@ -10,7 +10,8 @@ const useFetchLocationsLov = () => {
   const fetchLov = async () => {
     try {
       setIsLoading(true);
-      const res = await fetch("/api/admin/getVehicleModels", {
+      const API_BASE_URL = "http://localhost:5000";
+      const res = await fetch(`${API_BASE_URL}/api/admin/getVehicleModels`, {
         method: "GET",
         headers: {
           "Content-Type": "application/json",

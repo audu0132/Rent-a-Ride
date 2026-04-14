@@ -27,7 +27,8 @@ const VendorAllVehicles = () => {
   const fetchVendorVehicles = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/vendor/showVendorVehilces", {
+      const API_BASE_URL = "http://localhost:5000";
+      const res = await fetch(`${API_BASE_URL}/api/vendor/showVendorVehilces`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ _id }),

@@ -6,8 +6,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineX, HiOutlineCloudUpload, HiOutlineCheckCircle, HiOutlineExclamationCircle } from "react-icons/hi";
-import { fetchModelData } from "./AddProductModal"; // Assuming this is exported or I'll inline it
-
+import useFetchLocationsLov from "../../../hooks/useFetchLocationsLov";
 import { setLoading, setadminAddVehicleSuccess, setadminCrudError } from "../../../redux/adminSlices/adminDashboardSlice/StatusSlice";
 
 const AddProductModal = () => {
@@ -18,10 +17,13 @@ const AddProductModal = () => {
   const { modelData, companyData, locationData, districtData } = useSelector((state) => state.modelDataSlice);
   const { loading } = useSelector(state => state.statusSlice);
 
+  const { fetchLov } = useFetchLocationsLov();
+
   useEffect(() => {
     // If fetchModelData is not available via import, I'll call it here
     // For now I'm assuming it's available or the logic is consistent
     dispatch(addVehicleClicked(true));
+    fetchLov();
   }, []);
 
   const onSubmit = async (addData) => {
@@ -56,7 +58,8 @@ const AddProductModal = () => {
       dispatch(setLoading(true));
       const toastId = toast.loading("Uploading vehicle data...", { position: "bottom-center" });
 
-      const res = await fetch("/api/admin/addProduct", {
+      const API_BASE_URL = "http://localhost:5000";
+      const res = await fetch(`${API_BASE_URL}/api/admin/addProduct`, {
         method: "POST",
         body: formData
       });

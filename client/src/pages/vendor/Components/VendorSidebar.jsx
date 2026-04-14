@@ -93,19 +93,23 @@ const VendorSidebar = () => {
                     }
                   `}
                 >
-                  <motion.span 
-                    variants={itemVariants}
-                    className="text-lg opacity-70 group-hover:scale-110 transition-transform"
-                  >
-                    {link.icon}
-                  </motion.span>
-                  <span className="capitalize">{link.name}</span>
-                  {/* Active Indicator */}
-                  {({ isActive }) => isActive && (
-                    <motion.div 
-                      layoutId="activeIndicatorVendor"
-                      className="ml-auto h-1 w-1 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
-                    />
+                  {({ isActive }) => (
+                    <>
+                      <motion.span 
+                        variants={itemVariants}
+                        className="text-lg opacity-70 group-hover:scale-110 transition-transform"
+                      >
+                        {link.icon}
+                      </motion.span>
+                      <span className="capitalize">{link.name}</span>
+                      {/* Active Indicator */}
+                      {isActive && (
+                        <motion.div 
+                          layoutId="activeIndicatorVendor"
+                          className="ml-auto h-1 w-1 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"
+                        />
+                      )}
+                    </>
                   )}
                 </NavLink>
               ))}

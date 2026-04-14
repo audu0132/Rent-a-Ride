@@ -32,7 +32,8 @@ function VendorSignup() {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await fetch("/api/vendor/vendorsignup", {
+      const API_BASE_URL = "http://localhost:5000";
+      const res = await fetch(`${API_BASE_URL}/api/vendor/vendorsignup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

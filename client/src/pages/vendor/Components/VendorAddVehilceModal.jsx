@@ -9,7 +9,7 @@ import { useNavigate } from "react-router-dom";
 import toast, { Toaster } from "react-hot-toast";
 
 import { MenuItem, } from "@mui/material";
-import { fetchModelData } from "../../admin/components/AddProductModal";
+import useFetchLocationsLov from "../../../hooks/useFetchLocationsLov";
 import { useEffect } from "react";
 
 import Button from "@mui/material/Button";
@@ -35,8 +35,11 @@ const VendorAddProductModal = () => {
   const { _id } = useSelector((state) => state.user.currentUser);
 
 
+  const { fetchLov } = useFetchLocationsLov();
+
   useEffect(() => {
-    fetchModelData(dispatch);
+    dispatch(addVehicleClicked(true));
+    fetchLov();
   }, []);
 
   const onSubmit = async (addData) => {
@@ -75,7 +78,8 @@ const VendorAddProductModal = () => {
         tostID = toast.loading("saving...", { position: "bottom-center" });
       }
 
-      const res = await fetch("/api/vendor/vendorAddVehicle", {
+      const API_BASE_URL = "http://localhost:5000";
+      const res = await fetch(`${API_BASE_URL}/api/vendor/vendorAddVehicle`, {
         method: "POST",
         body: formData,
       });
