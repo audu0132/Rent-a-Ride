@@ -178,7 +178,7 @@ const VenderVehicleRequests = () => {
                                 (vehicle.isAdminApproved || vehicle.isRejected) ? "opacity-20 cursor-not-allowed" : "bg-rose-500/10"
                               }`}
                             >
-                              <HiX size={18} />
+                              <HiXMark size={18} />
                             </motion.button>
                           </div>
                         </td>
