@@ -1,7 +1,7 @@
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { HiCheck, HiX, HiOutlineIdentification, HiOutlineCheckBadge, HiOutlineClock } from "react-icons/hi2";
+import { HiCheck, HiXMark, HiOutlineIdentification, HiOutlineCheckBadge, HiOutlineClock } from "react-icons/hi2";
 import toast, { Toaster } from "react-hot-toast";
 
 // Redux
@@ -141,7 +141,7 @@ const VenderVehicleRequests = () => {
                         <td>
                           {vehicle.isRejected ? (
                              <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-rose-500">
-                                <HiX size={14} />
+                                <HiXMark size={14} />
                                 Rejected
                              </span>
                           ) : !vehicle.isAdminApproved ? (
