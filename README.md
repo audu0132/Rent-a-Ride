@@ -52,8 +52,8 @@ https://github.com/audu0132/Rent-a-Ride.git
 > The UI utilizes a bespoke "Midnight Dark" palette featuring Emerald accents and deep Slate depth.
 
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/4b769f7d-5d2c-43a7-8283-07fa8402de92" width="48%" />
-  <img src="https://github.com/user-attachments/assets/5d6e0160-5f1d-4e67-a64e-1e18fb17a590" width="48%" />
+  <img src="/client/src/Assets/image.png" width="48%" />
+  <img src="/client/src/Assets/image.png" width="48%" />
 </div>
 
 ---
