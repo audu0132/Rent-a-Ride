@@ -6,6 +6,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { HiOutlineMail, HiOutlineLockClosed, HiOutlineUser, HiArrowRight } from "react-icons/hi";
+import API_BASE_URL from "../../config/api";
 
 const schema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters" }),
@@ -27,7 +28,7 @@ function SignUp() {
   const onSubmit = async (formData) => {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:3000/api/auth/signup", {
+      const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

@@ -5,6 +5,7 @@ import VendorOAuth from "../../../components/VendorAuth";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
+import API_BASE_URL from "../../../config/api";
 
 const schema = z.object({
   username: z.string().min(3, { message: "minimum 3 characters required" }),
@@ -32,7 +33,6 @@ function VendorSignup() {
     e.preventDefault();
     setLoading(true);
     try {
-      const API_BASE_URL = "http://localhost:5000";
       const res = await fetch(`${API_BASE_URL}/api/vendor/vendorsignup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

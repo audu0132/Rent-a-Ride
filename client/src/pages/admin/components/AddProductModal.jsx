@@ -8,6 +8,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineX, HiOutlineCloudUpload, HiOutlineCheckCircle, HiOutlineExclamationCircle } from "react-icons/hi";
 import useFetchLocationsLov from "../../../hooks/useFetchLocationsLov";
 import { setLoading, setadminAddVehicleSuccess, setadminCrudError } from "../../../redux/adminSlices/adminDashboardSlice/StatusSlice";
+import API_BASE_URL from "../../../config/api";
 
 const AddProductModal = () => {
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm();
@@ -58,7 +59,6 @@ const AddProductModal = () => {
       dispatch(setLoading(true));
       const toastId = toast.loading("Uploading vehicle data...", { position: "bottom-center" });
 
-      const API_BASE_URL = "http://localhost:5000";
       const res = await fetch(`${API_BASE_URL}/api/admin/addProduct`, {
         method: "POST",
         body: formData

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlinePencilAlt, HiOutlineTrash, HiOutlinePlus, HiCheckCircle, HiClock, HiXCircle } from "react-icons/hi";
 import toast, { Toaster } from "react-hot-toast";
+import API_BASE_URL from "../../../config/api";
 
 // Redux
 import {
@@ -27,7 +28,6 @@ const VendorAllVehicles = () => {
   const fetchVendorVehicles = async () => {
     setLoading(true);
     try {
-      const API_BASE_URL = "http://localhost:5000";
       const res = await fetch(`${API_BASE_URL}/api/vendor/showVendorVehilces`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

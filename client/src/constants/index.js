@@ -1,7 +1,7 @@
 import axios from "axios";
 
 export const API = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || "/api",
+  baseURL: (import.meta.env.VITE_API_BASE_URL || "https://rent-a-ride-ufjq.onrender.com") + "/api",
   withCredentials: true,
 });
 

@@ -12,6 +12,7 @@ import {
   HiOutlineChevronRight
 } from "react-icons/hi";
 import useFetchLocationsLov from "../../../hooks/useFetchLocationsLov";
+import API_BASE_URL from "../../../config/api";
 
 const VendorAddProductModal = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
@@ -74,7 +75,6 @@ const VendorAddProductModal = () => {
       formData.append("district", addData.vehicleDistrict);
       formData.append("addedBy", _id);
 
-      const API_BASE_URL = "http://localhost:5000";
       const res = await fetch(`${API_BASE_URL}/api/vendor/vendorAddVehicle`, {
         method: "POST",
         body: formData,

@@ -4,6 +4,7 @@ import { signInFailure, signInSuccess } from "../redux/user/userSlice";
 import { useDispatch } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import API_BASE_URL from "../config/api";
 
 function VendorOAuth() {
   const dispatch = useDispatch();
@@ -16,7 +17,6 @@ function VendorOAuth() {
 
       const result = await signInWithPopup(auth, provider);
 
-      const API_BASE_URL = "http://localhost:5000";
       const res = await fetch(`${API_BASE_URL}/api/vendor/vendorgoogle`, {
         method: "POST",
         headers: {

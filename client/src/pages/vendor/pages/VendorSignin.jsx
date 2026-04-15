@@ -7,6 +7,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { X, Mail, Lock, AlertCircle, ArrowRight } from "lucide-react";
+import API_BASE_URL from "../../../config/api";
 
 const schema = z.object({
   email: z
@@ -33,7 +34,6 @@ function VendorSignin() {
     e.preventDefault();
     try {
       dispatch(signInStart());
-      const API_BASE_URL = "http://localhost:5000";
       const res = await fetch(`${API_BASE_URL}/api/vendor/vendorsignin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },

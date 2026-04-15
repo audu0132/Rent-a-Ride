@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useDispatch } from "react-redux";
 import { setCompanyData, setDistrictData, setLocationData, setModelData } from "../redux/adminSlices/adminDashboardSlice/CarModelDataSlice";
 import { setWholeData } from "../redux/user/selectRideSlice";
+import API_BASE_URL from "../config/api";
 
 const useFetchLocationsLov = () => {
   const dispatch = useDispatch();
@@ -10,7 +11,6 @@ const useFetchLocationsLov = () => {
   const fetchLov = async () => {
     try {
       setIsLoading(true);
-      const API_BASE_URL = "http://localhost:5000";
       const res = await fetch(`${API_BASE_URL}/api/admin/getVehicleModels`, {
         method: "GET",
         headers: {
