@@ -5,8 +5,8 @@ import toast, { Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineX, HiOutlineCloudUpload, HiOutlineSave, HiOutlineExclamationCircle } from "react-icons/hi";
-
 import { setLoading, setadminEditVehicleSuccess, setadminCrudError } from "../../../redux/adminSlices/adminDashboardSlice/StatusSlice";
+import API_BASE_URL from "../../../config/api";
 
 const EditProductComponent = () => {
   const { register, handleSubmit, control, reset, formState: { errors } } = useForm();
@@ -24,7 +24,7 @@ const EditProductComponent = () => {
   useEffect(() => {
     const fetchVehicle = async () => {
       try {
-        const res = await fetch(`/api/admin/getVehicle/${vehicle_id}`);
+        const res = await fetch(`${API_BASE_URL}/api/admin/getVehicle/${vehicle_id}`);
         if (res.ok) {
           const data = await res.json();
           setVehicleData(data);
@@ -69,7 +69,7 @@ const EditProductComponent = () => {
       dispatch(setLoading(true));
       const toastId = toast.loading("Saving changes...", { position: "bottom-center" });
 
-      const res = await fetch("/api/admin/editProduct", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/editProduct`, {
         method: "PUT",
         body: formData
       });

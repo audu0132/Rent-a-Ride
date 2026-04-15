@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlinePencilAlt, HiOutlineTrash, HiOutlinePlus } from "react-icons/hi";
 import toast, { Toaster } from "react-hot-toast";
+import API_BASE_URL from "../../../config/api";
 
 // Redux
 import { setEditData } from "../../../redux/adminSlices/actions";
@@ -24,7 +25,7 @@ const AllVehicles = () => {
   const fetchVehicles = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/showVehicles", { method: "GET" });
+      const res = await fetch(`${API_BASE_URL}/api/admin/showVehicles`, { method: "GET" });
       if (res.ok) {
         const data = await res.json();
         setVehicles(data);
@@ -43,7 +44,7 @@ const AllVehicles = () => {
 
   const handleDelete = async (vehicle_id) => {
     try {
-      const res = await fetch(`/api/admin/deleteVehicle/${vehicle_id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/admin/deleteVehicle/${vehicle_id}`, {
         method: "DELETE",
       });
       if (res.ok) {

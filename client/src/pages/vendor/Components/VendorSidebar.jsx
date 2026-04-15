@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiX, HiOutlineLogout } from "react-icons/hi";
 import { SiShopware } from "react-icons/si";
+import API_BASE_URL from "../../../config/api";
 
 // Redux
 import { signOut } from "../../../redux/user/userSlice.jsx";
@@ -18,7 +19,7 @@ const VendorSidebar = () => {
 
   const handleSignout = async () => {
     try {
-      const res = await fetch("/api/admin/signout", { method: "GET" });
+      const res = await fetch(`${API_BASE_URL}/api/admin/signout`, { method: "GET" });
       if (res.ok) {
         dispatch(signOut());
         navigate("/signin");

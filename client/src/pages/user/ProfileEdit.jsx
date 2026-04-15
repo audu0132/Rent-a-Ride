@@ -5,6 +5,7 @@ import TextField from "@mui/material/TextField";
 import { useDispatch, useSelector } from "react-redux";
 import { editUserProfile, setUpdated } from "../../redux/user/userSlice";
 import { useForm } from "react-hook-form";
+import API_BASE_URL from "../../config/api";
 
 const ProfileEdit = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -19,7 +20,7 @@ const ProfileEdit = () => {
       if (data && id) {
         const formData = data;
         dispatch(editUserProfile({ ...formData }));
-        await fetch(`/api/user/editUserProfile/${id}`, {
+        await fetch(`${API_BASE_URL}/api/user/editUserProfile/${id}`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

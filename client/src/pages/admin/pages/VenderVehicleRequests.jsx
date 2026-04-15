@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiCheck, HiXMark, HiOutlineIdentification, HiOutlineCheckBadge, HiOutlineClock } from "react-icons/hi2";
 import toast, { Toaster } from "react-hot-toast";
+import API_BASE_URL from "../../../config/api";
 
 // Redux
 import { setUpdateRequestTable, setVenodrVehilces, setadminVenodrRequest } from "../../../redux/vendor/vendorDashboardSlice";
@@ -15,7 +16,7 @@ const VenderVehicleRequests = () => {
   const fetchVendorRequests = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/admin/fetchVendorVehilceRequests`, { method: "GET" });
+      const res = await fetch(`${API_BASE_URL}/api/admin/fetchVendorVehilceRequests`, { method: "GET" });
       if (res.ok) {
         const data = await res.json();
         dispatch(setVenodrVehilces(data));
@@ -35,7 +36,7 @@ const VenderVehicleRequests = () => {
   const handleApproveRequest = async (id) => {
     try {
       dispatch(setUpdateRequestTable(id));
-      const res = await fetch("/api/admin/approveVendorVehicleRequest", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/approveVendorVehicleRequest`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ _id: id }),
@@ -52,7 +53,7 @@ const VenderVehicleRequests = () => {
   const handleReject = async (id) => {
     try {
       dispatch(setUpdateRequestTable(id));
-      const res = await fetch("/api/admin/rejectVendorVehicleRequest", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/rejectVendorVehicleRequest`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ _id: id }),

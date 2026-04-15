@@ -4,7 +4,6 @@ import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import { Controller, useForm } from "react-hook-form";
 import { IoMdClose } from "react-icons/io";
-
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -13,6 +12,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { toast } from "react-hot-toast";
 import { setVendorEditSuccess } from "../../../redux/vendor/vendorDashboardSlice";
+import API_BASE_URL from "../../../config/api";
 
 export default function VendorEditProductComponent() {
   const dispatch = useDispatch();
@@ -52,7 +52,7 @@ export default function VendorEditProductComponent() {
         tostID = toast.loading("saving...", { position: "bottom-center" });
         const formData = editData;
         const res = await fetch(
-          `/api/vendor/vendorEditVehicles/${vehicle_id}`,
+          `${API_BASE_URL}/api/vendor/vendorEditVehicles/${vehicle_id}`,
           {
             method: "PUT",
             headers: {

@@ -12,6 +12,7 @@ import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { motion } from "framer-motion";
 import { HiOutlineMail, HiOutlineLockClosed, HiArrowRight } from "react-icons/hi";
+import API_BASE_URL from "../../config/api";
 
 const schema = z.object({
   email: z
@@ -35,11 +36,10 @@ function SignIn() {
   const dispatch = useDispatch();
 
   const onSubmit = async (formData, e) => {
-    const BASE_URL = import.meta.env.MODE === "development" ? "" : import.meta.env.VITE_PRODUCTION_BACKEND_URL;
     e.preventDefault();
     try {
       dispatch(signInStart());
-      const res = await fetch(`${BASE_URL}/api/auth/signin`, {
+      const res = await fetch(`${API_BASE_URL}/api/auth/signin`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(formData),

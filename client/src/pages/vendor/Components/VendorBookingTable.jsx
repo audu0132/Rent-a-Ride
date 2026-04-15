@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineInformationCircle, HiOutlineCurrencyRupee, HiOutlineStatusOnline } from "react-icons/hi";
 import VendorBookingDetailModal from "./VendorBookingModal";
 import { setVendorOrderModalOpen, setVendorSingleOrderDetails } from "../../../redux/vendor/vendorBookingSlice";
+import API_BASE_URL from "../../../config/api";
 
 const VendorBookingTable = () => {
   const [bookings, setBookings] = useState([]);
@@ -20,7 +21,7 @@ const VendorBookingTable = () => {
 
   const fetchData = async () => {
     try {
-      const res = await fetch("/api/vendor/showVendorVehilces", {
+      const res = await fetch(`${API_BASE_URL}/api/vendor/showVendorVehilces`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ _id }),
@@ -36,7 +37,7 @@ const VendorBookingTable = () => {
 
   const fetchBookings = async () => {
     try {
-      const res = await fetch("/api/admin/allBookings", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/allBookings`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -65,7 +66,7 @@ const VendorBookingTable = () => {
   const handleStatusChange = async (e, bookingId) => {
     const newStatus = e.target.value;
     try {
-      const res = await fetch("/api/admin/changeStatus", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/changeStatus`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: bookingId, status: newStatus }),

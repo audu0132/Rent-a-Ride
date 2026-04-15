@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineCalendar, HiOutlineMapPin, HiOutlineClock, HiOutlineCurrencyRupee, HiOutlineInformationCircle } from "react-icons/hi2";
+import API_BASE_URL from "../../config/api";
 
 // Components
 import UserOrderDetailsModal from "../../components/UserOrderDetailsModal";
@@ -21,7 +22,7 @@ export default function Orders() {
 
   const fetchBookings = async () => {
     try {
-      const res = await fetch("/api/user/findBookingsOfUser", {
+      const res = await fetch(`${API_BASE_URL}/api/user/findBookingsOfUser`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ userId: _id }),

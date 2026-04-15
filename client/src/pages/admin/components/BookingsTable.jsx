@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineCalendar, HiOutlineStatusOnline } from "react-icons/hi";
+import API_BASE_URL from "../../../config/api";
 
 const BookingsTable = () => {
   const [bookings, setBookings] = useState([]);
@@ -8,7 +9,7 @@ const BookingsTable = () => {
 
   const fetchBookings = async () => {
     try {
-      const res = await fetch("/api/admin/allBookings", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/allBookings`, {
         method: "GET",
         headers: { "Content-Type": "application/json" },
       });
@@ -24,7 +25,7 @@ const BookingsTable = () => {
   const handleStatusChange = async (e, bookingId) => {
     const newStatus = e.target.value;
     try {
-      const res = await fetch("/api/admin/changeStatus", {
+      const res = await fetch(`${API_BASE_URL}/api/admin/changeStatus`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ id: bookingId, status: newStatus }),

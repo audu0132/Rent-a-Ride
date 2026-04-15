@@ -11,6 +11,7 @@ import { HiOutlineUserCircle, HiOutlineLogout, HiOutlineTrash, HiX } from "react
 import { SiShopware } from "react-icons/si";
 import { links } from "./UserSidebarContent";
 import { showSidebarOrNot } from "../redux/adminSlices/adminDashboardSlice/DashboardSlice";
+import API_BASE_URL from "../config/api";
 
 const UserProfileSidebar = () => {
   const { activeMenu, screenSize } = useSelector(
@@ -38,7 +39,7 @@ const UserProfileSidebar = () => {
     if (!currentUser?._id) return;
     try {
       dispatch(deleteUserStart());
-      const res = await fetch(`/api/user/delete/${currentUser._id}`, {
+      const res = await fetch(`${API_BASE_URL}/api/user/delete/${currentUser._id}`, {
         method: "DELETE",
       });
       const data = await res.json();

@@ -4,6 +4,7 @@ import { setFilteredData } from "../redux/user/sortfilterSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineChevronDown, HiCheck } from "react-icons/hi";
 import { useState } from "react";
+import API_BASE_URL from "../config/api";
 
 const FilterGroup = ({ title, children }) => {
   const [isOpen, setIsOpen] = useState(true);
@@ -96,7 +97,7 @@ const Filter = ({ onApply }) => {
       dispatch(setFilteredData(userAllVehicles));
     } else if (transformedData.length > 0) {
       try {
-        const res = await fetch("/api/user/filterVehicles", {
+        const res = await fetch(`${API_BASE_URL}/api/user/filterVehicles`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(transformedData),

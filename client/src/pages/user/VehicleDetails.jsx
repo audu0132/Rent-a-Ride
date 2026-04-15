@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { showVehicles } from "../../redux/user/listAllVehicleSlice";
+import API_BASE_URL from "../../config/api";
 
 // Icons
 import { 
@@ -36,7 +37,7 @@ const VehicleDetails = () => {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch("/api/user/listAllVehicles", {
+        const res = await fetch(`${API_BASE_URL}/api/user/listAllVehicles`, {
           headers: { "Authorization": `Bearer ${refreshToken},${accessToken}` },
         });
         const data = await res.json();
