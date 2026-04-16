@@ -67,22 +67,23 @@ export async function displayRazorpay(values, navigate, dispatch) {
         Authorization: `Bearer ${refreshToken},${accessToken}`,
         "Content-Type": "application/json",
       },
-
       body: JSON.stringify(values),
     });
 
-    const data = await result.json();
-
-    if (!data.ok) {
-      toast.error(data?.message);
+    if (!result.ok) {
+      const errorData = await result.json().catch(() => ({}));
+      toast.error(errorData?.message || `Payment failed (status ${result.status})`);
+      dispatch(setPageLoading(false));
       return;
     }
+
+    const data = await result.json();
 
     // Getting the order details back
     const { amount, id, currency } = data;
 
     const options = {
-      key: import.meta.env.RAZORPAY_KEY_ID,
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: amount.toString(),
       currency: currency,
       name: "Rent a Ride",
@@ -118,9 +119,9 @@ export async function displayRazorpay(values, navigate, dispatch) {
         }
       },
       prefill: {
-        name: "Jeevan aj",
-        email: "ambrahamjeevan@gmail.com",
-        contact: "8086240993",
+        name: "Audumbar More",
+        email: "[EMAIL_ADDRESS]",
+        contact: "7875938033",
       },
       theme: {
         color: "#61dafb",
