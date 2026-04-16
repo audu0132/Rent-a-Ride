@@ -207,7 +207,7 @@ body {
   }
 
   .dashboard-card {
-    @apply glass-card rounded-[2.5rem] p-8 transition-all duration-300 hover:border-emerald-500/30 hover:shadow-emerald-500/10;
+    @apply glass-card rounded-[2.5rem] p-8 transition-all duration-300 hover:border-emerald-500/30 hover:shadow-emerald-500/10 min-h-0;
   }
 
   .stat-card {

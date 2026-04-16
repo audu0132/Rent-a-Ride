@@ -34,16 +34,30 @@ app.use(cookieParser());
 
 const allowedOrigins = [
   "http://localhost:5173",
+  "http://localhost:5174",
   "https://rent-a-ride-chi.vercel.app",
 ];
 
-app.use(
-  cors({
-    origin: allowedOrigins,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    credentials: true,
-  })
-);
+const corsOptions = {
+  origin: (origin, callback) => {
+    // Allow requests with no origin (e.g. curl, Postman, server-to-server)
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error(`CORS policy: origin '${origin}' not allowed`));
+    }
+  },
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization", "x-access-token"],
+  exposedHeaders: ["set-cookie"],
+  credentials: true,
+  optionsSuccessStatus: 200, // Some older browsers choke on 204
+};
+
+app.use(cors(corsOptions));
+
+// ✅ Respond to all OPTIONS preflight requests
+app.options("*", cors(corsOptions));
 
 // ✅ Routes
 app.use("*", cloudinaryConfig);
