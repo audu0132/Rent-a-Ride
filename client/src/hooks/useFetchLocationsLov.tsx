@@ -1,16 +1,46 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useDispatch } from "react-redux";
-import { setCompanyData, setDistrictData, setLocationData, setModelData } from "../redux/adminSlices/adminDashboardSlice/CarModelDataSlice";
+import {
+  setCompanyData,
+  setDistrictData,
+  setLocationData,
+  setModelData,
+} from "../redux/adminSlices/adminDashboardSlice/CarModelDataSlice";
 import { setWholeData } from "../redux/user/selectRideSlice";
 import API_BASE_URL from "../config/api";
 
-const useFetchLocationsLov = () => {
-  const dispatch = useDispatch();
-  const [isLoading, setIsLoading] = useState(true);
+// --- Types ---
+interface VehicleItem {
+  type: "car";
+  model: string;
+  brand: string;
+}
 
-  const fetchLov = async () => {
+interface LocationItem {
+  type: "location";
+  location: string;
+  district: string;
+}
+
+type ApiResponseItem = VehicleItem | LocationItem;
+
+interface UseFetchLocationsLovReturn {
+  fetchLov: () => Promise<void>;
+  isLoading: boolean;
+  error: string | null;
+}
+
+// --- Hook ---
+const useFetchLocationsLov = (): UseFetchLocationsLovReturn => {
+  const dispatch = useDispatch();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const fetchLov = async (): Promise<void> => {
     try {
       setIsLoading(true);
+      setError(null);
+
       const res = await fetch(`${API_BASE_URL}/api/admin/getVehicleModels`, {
         method: "GET",
         headers: {
@@ -18,46 +48,45 @@ const useFetchLocationsLov = () => {
         },
       });
 
-      if (res.ok) {
-        const data = await res.json();
-
-        //getting models from data
-        const models = data.filter((cur) => cur.type === "car").map((cur) => cur.model);
-        dispatch(setModelData(models));
-
-        //getting comapnys from data
-        const brand = data.filter((cur) => cur.type === "car").map((cur) => cur.brand);
-        const uniqueBrand = brand.filter((cur, index) => {
-          return brand.indexOf(cur) === index;
-        });
-        dispatch(setCompanyData(uniqueBrand));
-
-        //getting locations from data
-        const locations = data.filter((cur) => cur.type === "location").map((cur) => cur.location);
-        dispatch(setLocationData(locations));
-
-        //getting districts from data
-        const districts = data.filter((cur) => cur.type === "location").map((cur) => cur.district);
-        const uniqueDistricts = districts.filter((cur, idx) => {
-          return districts.indexOf(cur) === idx;
-        });
-        dispatch(setDistrictData(uniqueDistricts));
-
-        //setting whole data
-        const wholeData = data.filter((cur) => cur.type === "location");
-        dispatch(setWholeData(wholeData));
-
-      } else {
-        return "no data found";
+      if (!res.ok) {
+        throw new Error(`Failed to fetch data (status ${res.status})`);
       }
-    } catch (error) {
-      console.log(error);
+
+      const data: ApiResponseItem[] = await res.json();
+
+      // --- Single-pass: separate cars and locations ---
+      const cars = data.filter((item): item is VehicleItem => item.type === "car");
+      const locations = data.filter((item): item is LocationItem => item.type === "location");
+
+      // Models
+      const models = cars.map((car) => car.model);
+      dispatch(setModelData(models));
+
+      // Unique brands (companies)
+      const uniqueBrands = [...new Set(cars.map((car) => car.brand))];
+      dispatch(setCompanyData(uniqueBrands));
+
+      // Locations
+      const locationNames = locations.map((loc) => loc.location);
+      dispatch(setLocationData(locationNames));
+
+      // Unique districts
+      const uniqueDistricts = [...new Set(locations.map((loc) => loc.district))];
+      dispatch(setDistrictData(uniqueDistricts));
+
+      // Whole location data
+      dispatch(setWholeData(locations));
+
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "An unexpected error occurred";
+      setError(message);
+      console.error("[useFetchLocationsLov]", message);
     } finally {
       setIsLoading(false);
     }
   };
 
-  return { fetchLov, isLoading };
+  return { fetchLov, isLoading, error };
 };
 
 export default useFetchLocationsLov;
