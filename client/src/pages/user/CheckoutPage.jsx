@@ -65,9 +65,13 @@ const CheckoutPage = () => {
     }
   };
 
-  const handlePlaceOrder = async () => {
+  const handlePlaceOrder = async (formData) => {
     const orderData = {
       user_id: currentUser._id,
+      username: currentUser.username, // Added for prefill
+      email: formData.email,
+      phoneNumber: formData.phoneNumber,
+      adress: formData.adress,
       vehicle_id: singleVehicleDetail._id,
       totalPrice,
       pickupDate: pickupDate.humanReadable,
@@ -79,11 +83,19 @@ const CheckoutPage = () => {
 
     try {
       dispatch(setPageLoading(true));
-      const res = await displayRazorpay(orderData, navigate, dispatch);
-      if (!res?.ok) toast.error(res?.message || "Payment initialization failed");
+      const result = await displayRazorpay(orderData, navigate, dispatch);
+      
+      // If result is returned, the internal Razorpay logic already handled the toast/ui
+      // This final check ensures that if an error wasn't toasted inside, we catch it here.
+      if (result && !result.success && result.message) {
+         // Internal errors like "Payment cancelled by user" are already handled or silenced
+         console.log("Order flow outcome:", result.message);
+      }
     } catch (err) {
-      console.error(err);
+      console.error("Critical order handler failure:", err);
+      toast.error("An unexpected error occurred during checkout.");
     } finally {
+      // Safety reset: Ensure button isn't stuck if modal fails to open
       dispatch(setPageLoading(false));
     }
   };
@@ -235,58 +247,60 @@ const CheckoutPage = () => {
             )}
 
             {step === 3 && (
-              <motion.div key="step3" {...stepVariants} className="space-y-8">
-                <div>
-                  <h2 className="text-4xl font-black text-white tracking-tight uppercase">Confirm & Authorize</h2>
-                  <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">Step 03: Final Authorization & Payment</p>
-                </div>
+              <form onSubmit={handleSubmit(handlePlaceOrder)}>
+                <motion.div key="step3" {...stepVariants} className="space-y-8">
+                  <div>
+                    <h2 className="text-4xl font-black text-white tracking-tight uppercase">Confirm & Authorize</h2>
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">Step 03: Final Authorization & Payment</p>
+                  </div>
 
-                <div className="glass-card p-8 border-emerald-500/20 bg-emerald-500/5">
-                   <div className="flex items-start gap-4">
-                      <div className="h-12 w-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-slate-950">
-                        <HiOutlineShieldCheck size={28} />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-lg font-black text-white uppercase tracking-tight">Security Guaranteed</h4>
-                        <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Encrypted SSL transaction via Razorpay Secure 3.0</p>
-                      </div>
-                   </div>
-                </div>
+                  <div className="glass-card p-8 border-emerald-500/20 bg-emerald-500/5">
+                    <div className="flex items-start gap-4">
+                        <div className="h-12 w-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-slate-950">
+                          <HiOutlineShieldCheck size={28} />
+                        </div>
+                        <div className="flex-1">
+                          <h4 className="text-lg font-black text-white uppercase tracking-tight">Security Guaranteed</h4>
+                          <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Encrypted SSL transaction via Razorpay Secure 3.0</p>
+                        </div>
+                    </div>
+                  </div>
 
-                {/* Coupon System */}
-                <div className="flex gap-4">
-                  <input {...register("coupon")} className={inputClasses} placeholder="Enter luxury code (e.g. WELCOME50)" />
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={(e) => { e.preventDefault(); handleCoupon(); }}
-                    className="px-8 rounded-2xl bg-white/10 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-white/20"
-                  >
-                    Apply
-                  </motion.button>
-                </div>
+                  {/* Coupon System */}
+                  <div className="flex gap-4">
+                    <input {...register("coupon")} className={inputClasses} placeholder="Enter luxury code (e.g. WELCOME50)" />
+                    <button
+                      type="button"
+                      onClick={(e) => { e.preventDefault(); handleCoupon(); }}
+                      className="px-8 rounded-2xl bg-white/10 text-xs font-black uppercase tracking-widest text-white transition-all hover:bg-white/20"
+                    >
+                      Apply
+                    </button>
+                  </div>
 
-                <div className="flex gap-4">
-                  <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setStep(2)}
-                    className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/5 px-8 py-5 text-sm font-black uppercase tracking-widest text-slate-300"
-                  >
-                    <HiOutlineArrowLeft size={20} />
-                    Refine Details
-                  </motion.button>
-                  <motion.button
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleSubmit(handlePlaceOrder)}
-                    disabled={isPageLoading}
-                    className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-emerald-500 px-10 py-5 text-sm font-black uppercase tracking-widest text-slate-950 shadow-xl shadow-emerald-500/20 disabled:opacity-50"
-                  >
-                    {isPageLoading ? "Processing Authorization..." : "Authorize Rental Payment"}
-                    {!isPageLoading && <HiOutlineCreditCard size={20} />}
-                  </motion.button>
-                </div>
-              </motion.div>
+                  <div className="flex gap-4">
+                    <motion.button
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setStep(2)}
+                      className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/5 px-8 py-5 text-sm font-black uppercase tracking-widest text-slate-300"
+                    >
+                      <HiOutlineArrowLeft size={20} />
+                      Refine Details
+                    </motion.button>
+                    <motion.button
+                      type="submit"
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      disabled={isPageLoading}
+                      className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-emerald-500 px-10 py-5 text-sm font-black uppercase tracking-widest text-slate-950 shadow-xl shadow-emerald-500/20 disabled:opacity-50"
+                    >
+                      {isPageLoading ? "Processing Authorization..." : "Authorize Rental Payment"}
+                      {!isPageLoading && <HiOutlineCreditCard size={20} />}
+                    </motion.button>
+                  </div>
+                </motion.div>
+              </form>
             )}
           </AnimatePresence>
         </div>
@@ -295,7 +309,9 @@ const CheckoutPage = () => {
         <div className="lg:w-96">
           <div className="sticky top-32 glass-card overflow-hidden">
             <div className="aspect-video w-full overflow-hidden bg-slate-900">
-               <img src={singleVehicleDetail.image[0]} className="h-full w-full object-contain" alt="fleet" />
+               {singleVehicleDetail?.image && singleVehicleDetail.image.length > 0 && (
+                 <img src={singleVehicleDetail.image[0]} className="h-full w-full object-contain" alt="fleet" />
+               )}
             </div>
             <div className="p-8 space-y-6">
               <div>

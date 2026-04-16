@@ -20,7 +20,7 @@ export function loadScript(src) {
   });
 }
 
-//function to fetch latest bookings from db and update it to redux
+// Function to fetch latest bookings from db and update it to redux
 export const fetchLatestBooking = async (user_id, dispatch) => {
   try {
     const response = await fetch(`${API_BASE_URL}/api/user/latestbookings`, {
@@ -45,22 +45,22 @@ export const fetchLatestBooking = async (user_id, dispatch) => {
   }
 };
 
-//function related to razorpay payment
+// Function related to razorpay payment
 export async function displayRazorpay(values, navigate, dispatch) {
   try {
     const res = await loadScript(
       "https://checkout.razorpay.com/v1/checkout.js"
     );
 
+    if (!res) {
+      toast.error("Razorpay SDK failed to load. Please check your internet connection.");
+      return { success: false, message: "SDK failed to load" };
+    }
+
     let refreshToken = localStorage.getItem("refreshToken");
     let accessToken = localStorage.getItem("accessToken");
 
-    if (!res) {
-      alert("Razorpay SDK failed to load. Are you online?");
-      return;
-    }
-
-    // creating a new order
+    // Phase 1: Creating a new order on the backend
     const result = await fetch(`${API_BASE_URL}/api/user/razorpay`, {
       method: "POST",
       headers: {
@@ -70,70 +70,98 @@ export async function displayRazorpay(values, navigate, dispatch) {
       body: JSON.stringify(values),
     });
 
+    // Handle non-OK responses (including 400, 404, 500, and CORS failures)
     if (!result.ok) {
-      const errorData = await result.json().catch(() => ({}));
-      toast.error(errorData?.message || `Payment failed (status ${result.status})`);
-      dispatch(setPageLoading(false));
-      return;
+        const errorData = await result.json().catch(() => ({}));
+        const msg = errorData?.message || `Order creation failed (Status ${result.status})`;
+        toast.error(msg);
+        return { success: false, message: msg };
     }
 
     const data = await result.json();
 
-    // Getting the order details back
+    // Support both direct data return or data.ok success key
+    if (data.ok === false) {
+      toast.error(data.message || "Server rejected order creation");
+      return { success: false, message: data.message };
+    }
+
+    // Phase 2: Open Razorpay Gateway
     const { amount, id, currency } = data;
 
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
-      amount: amount.toString(),
-      currency: currency,
-      name: "Rent a Ride",
-      description: "Test Transaction",
-      order_id: id,
-      handler: async function (response) {
-        const data = {
-          razorpayPaymentId: response.razorpay_payment_id,
-          razorpayOrderId: response.razorpay_order_id,
-          razorpaySignature: response.razorpay_signature,
-        };
+    return new Promise((resolve) => {
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID,
+        amount: amount.toString(),
+        currency: currency,
+        name: "Rent a Ride",
+        description: "Secure Vehicle Rental Payment",
+        order_id: id,
+        handler: async function (response) {
+          try {
+            dispatch(setPageLoading(true)); // Start loading for the db sync
+            const paymentData = {
+              razorpayPaymentId: response.razorpay_payment_id,
+              razorpayOrderId: response.razorpay_order_id,
+              razorpaySignature: response.razorpay_signature,
+            };
 
-        // final data to store in database
-        const dbData = { ...values, ...data };
-        const result = await fetch(`${API_BASE_URL}/api/user/bookCar`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(dbData),
-        });
-        const successStatus = await result.json();
-        if (successStatus) {
-          dispatch(setIsSweetAlert(true));
+            const dbData = { ...values, ...paymentData };
+            const finalizeRes = await fetch(`${API_BASE_URL}/api/user/bookCar`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify(dbData),
+            });
 
-          //1. when payment is successfull fetch latest bookigns
-          //2. update the paymentdone to true from false (this is done inside fetchlatestBooking function)
-          //3. this display razorpay function was called initially from checkoutPage go to there
-          await fetchLatestBooking(values.user_id, dispatch);
+            const successStatus = await finalizeRes.json();
+            if (successStatus) {
+              dispatch(setIsSweetAlert(true));
+              await fetchLatestBooking(values.user_id, dispatch);
+              navigate("/");
+              resolve({ success: true });
+            } else {
+              toast.error("Payment recorded but order finalization failed.");
+              resolve({ success: false, message: "DB sync failed" });
+            }
+          } catch (err) {
+            console.error(err);
+            toast.error("Error finalizing your booking.");
+            resolve({ success: false, message: "Finalization error" });
+          } finally {
+            dispatch(setPageLoading(false));
+          }
+        },
+        modal: {
+            ondismiss: function() {
+                dispatch(setPageLoading(false));
+                resolve({ success: false, message: "Payment cancelled by user" });
+            }
+        },
+        prefill: {
+          name: values.username || "User",
+          email: values.email || "",
+          contact: values.phoneNumber || "",
+        },
+        theme: {
+          color: "#10b981", // Matching emerald theme
+        },
+      };
 
-          navigate("/");
-          dispatch(setPageLoading(false));
-        }
-      },
-      prefill: {
-        name: "Audumbar More",
-        email: "[EMAIL_ADDRESS]",
-        contact: "7875938033",
-      },
-      theme: {
-        color: "#61dafb",
-      },
-    };
+      const paymentObject = new window.Razorpay(options);
+      paymentObject.open();
+    });
 
-    const paymentObject = new window.Razorpay(options);
-    paymentObject.open();
-    dispatch(setPageLoading(false));
   } catch (error) {
-    console.log(error);
-    toast.error(error.message);
+    console.error("Razorpay Error:", error);
+    const errorMsg = error.message === "Failed to fetch" ? "Network error: Backend unreachable (CORS or Server Down)" : error.message;
+    toast.error(errorMsg);
+    return { success: false, message: errorMsg };
+  } finally {
+    // Only set loading to false here if we didn't open the modal yet, 
+    // or if the flow was synchronous. For the gateway, handler handles its own loading.
+    dispatch(setPageLoading(false));
   }
 }
 
