@@ -154,11 +154,11 @@ const CheckoutPage = () => {
                       <div className="space-y-4">
                         <div className="flex justify-between">
                           <p className="text-xs font-bold text-slate-500 uppercase">Start</p>
-                          <p className="text-sm font-black text-white">{new Date(pickupDate.humanReadable).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                          <p className="text-sm font-black text-white">{pickupDate?.humanReadable && !isNaN(new Date(pickupDate.humanReadable).getTime()) ? new Date(pickupDate.humanReadable).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
                         </div>
                         <div className="flex justify-between">
                           <p className="text-xs font-bold text-slate-500 uppercase">End</p>
-                          <p className="text-sm font-black text-white">{new Date(dropoffDate.humanReadable).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
+                          <p className="text-sm font-black text-white">{dropoffDate?.humanReadable && !isNaN(new Date(dropoffDate.humanReadable).getTime()) ? new Date(dropoffDate.humanReadable).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
                         </div>
                         <div className="flex justify-between border-t border-white/5 pt-4">
                           <p className="text-xs font-bold text-slate-500 uppercase">Duration</p>

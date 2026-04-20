@@ -114,9 +114,9 @@ const BookingsTable = () => {
                   <td>
                     <div className="space-y-1 text-xs">
                       <p className="font-bold text-slate-400">
-                        {new Date(booking.pickupDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })} 
+                        {booking.pickupDate && !isNaN(new Date(booking.pickupDate).getTime()) ? new Date(booking.pickupDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'N/A'} 
                         <span className="mx-1 opacity-30">→</span>
-                        {new Date(booking.dropOffDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}
+                        {booking.dropOffDate && !isNaN(new Date(booking.dropOffDate).getTime()) ? new Date(booking.dropOffDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'N/A'}
                       </p>
                     </div>
                   </td>

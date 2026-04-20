@@ -149,9 +149,9 @@ const VendorBookingTable = () => {
                       </td>
                       <td>
                         <div className="space-y-1 text-xs font-bold text-slate-400">
-                          <span>{new Date(booking.pickupDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+                          <span>{booking.pickupDate && !isNaN(new Date(booking.pickupDate).getTime()) ? new Date(booking.pickupDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'N/A'}</span>
                           <span className="mx-2 opacity-30">→</span>
-                          <span>{new Date(booking.dropOffDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</span>
+                          <span>{booking.dropOffDate && !isNaN(new Date(booking.dropOffDate).getTime()) ? new Date(booking.dropOffDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' }) : 'N/A'}</span>
                         </div>
                       </td>
                       <td>

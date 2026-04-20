@@ -82,8 +82,12 @@ export default function Orders() {
       >
         {bookings && bookings.length > 0 ? (
           bookings.map((cur, idx) => {
-            const pickupDate = new Date(cur.bookingDetails.pickupDate);
-            const dropoffDate = new Date(cur.bookingDetails.dropOffDate);
+            const rawPickup = cur.bookingDetails.pickupDate;
+            const rawDropoff = cur.bookingDetails.dropOffDate;
+            const validPickup = rawPickup && !isNaN(new Date(rawPickup).getTime());
+            const validDropoff = rawDropoff && !isNaN(new Date(rawDropoff).getTime());
+            const pickupDate = validPickup ? new Date(rawPickup) : null;
+            const dropoffDate = validDropoff ? new Date(rawDropoff) : null;
 
             return (
               <motion.div
@@ -141,10 +145,10 @@ export default function Orders() {
                             </div>
                             <div className="flex items-center gap-3 text-sm font-medium text-slate-400">
                               <HiOutlineCalendar className="text-slate-600" />
-                              <span>{pickupDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                              <span>{pickupDate ? pickupDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
                               <span className="h-4 w-px bg-white/10" />
                               <HiOutlineClock className="text-slate-600" />
-                              <span>{pickupDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              <span>{pickupDate ? pickupDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
                             </div>
                           </div>
                         </div>
@@ -162,10 +166,10 @@ export default function Orders() {
                             </div>
                             <div className="flex items-center gap-3 text-sm font-medium text-slate-400">
                               <HiOutlineCalendar className="text-slate-600" />
-                              <span>{dropoffDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                              <span>{dropoffDate ? dropoffDate.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' }) : 'N/A'}</span>
                               <span className="h-4 w-px bg-white/10" />
                               <HiOutlineClock className="text-slate-600" />
-                              <span>{dropoffDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                              <span>{dropoffDate ? dropoffDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'N/A'}</span>
                             </div>
                           </div>
                         </div>
