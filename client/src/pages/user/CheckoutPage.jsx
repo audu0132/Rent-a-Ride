@@ -1,3 +1,4 @@
+// CheckoutPage.jsx
 import { useDispatch, useSelector } from "react-redux";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -24,7 +25,7 @@ const CheckoutPage = () => {
   const [step, setStep] = useState(1);
   const navigate = useNavigate();
   const dispatch = useDispatch();
-  const { register, handleSubmit, watch, formState: { errors, isValid }, trigger } = useForm({
+  const { register, handleSubmit, watch, formState: { errors }, trigger } = useForm({
     resolver: zodResolver(schema),
     mode: "onChange"
   });
@@ -54,7 +55,7 @@ const CheckoutPage = () => {
     }
   };
 
-  const totalPrice = (singleVehicleDetail.price * Days) + 50 - discount;
+  const totalPrice = (singleVehicleDetail?.price * Days) + 50 - discount;
 
   const handleNext = async () => {
     if (step === 2) {
@@ -66,38 +67,47 @@ const CheckoutPage = () => {
   };
 
   const handlePlaceOrder = async (formData) => {
+    console.log("Button clicked!", formData);
+    
+    if (isPageLoading) return; // Prevent double firing while active
+
     const orderData = {
-      user_id: currentUser._id,
-      username: currentUser.username, // Added for prefill
+      user_id: currentUser?._id,
+      username: currentUser?.username, // Added for prefill
       email: formData.email,
       phoneNumber: formData.phoneNumber,
       adress: formData.adress,
-      vehicle_id: singleVehicleDetail._id,
+      vehicle_id: singleVehicleDetail?._id,
       totalPrice,
-      pickupDate: pickupDate.humanReadable,
-      dropoffDate: dropoffDate.humanReadable,
+      pickupDate: pickupDate?.humanReadable,
+      dropoffDate: dropoffDate?.humanReadable,
       pickup_district,
       pickup_location,
       dropoff_location,
     };
 
     try {
+      console.log("API call started with:", orderData);
       dispatch(setPageLoading(true));
-      const result = await displayRazorpay(orderData, navigate, dispatch);
       
-      // If result is returned, the internal Razorpay logic already handled the toast/ui
-      // This final check ensures that if an error wasn't toasted inside, we catch it here.
+      const result = await displayRazorpay(orderData, navigate, dispatch);
+      console.log("API response received:", result);
+      
       if (result && !result.success && result.message) {
-         // Internal errors like "Payment cancelled by user" are already handled or silenced
-         console.log("Order flow outcome:", result.message);
+         console.warn("Order flow handled internal notification:", result.message);
       }
     } catch (err) {
       console.error("Critical order handler failure:", err);
-      toast.error("An unexpected error occurred during checkout.");
+      toast.error(err?.message || "An unexpected error occurred during checkout.");
     } finally {
-      // Safety reset: Ensure button isn't stuck if modal fails to open
+      // Must safely reset the button at the absolute conclusion
       dispatch(setPageLoading(false));
     }
+  };
+
+  const onInvalidForm = (errors) => {
+    console.log("Validation blocked submission:", errors);
+    toast.error("Please provide valid information in all required fields.");
   };
 
   useEffect(() => {
@@ -115,10 +125,10 @@ const CheckoutPage = () => {
   const inputClasses = "w-full rounded-2xl border border-white/5 bg-white/5 px-6 py-4 text-sm font-semibold text-white outline-none transition-all focus:border-emerald-500/50 focus:bg-white/10 placeholder:text-slate-600";
 
   return (
-    <div className="min-h-screen bg-slate-950 pt-32 pb-20 px-6 lg:px-20">
+    <div className="min-h-screen bg-slate-950 pt-32 pb-20 px-6 lg:px-20 relative z-0">
       <Toaster richColors position="top-right" />
       
-      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-12">
+      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-12 relative">
         
         {/* Left Side: Wizard Flow */}
         <div className="flex-1 space-y-12">
@@ -137,117 +147,120 @@ const CheckoutPage = () => {
             ))}
           </div>
 
-          <AnimatePresence mode="wait">
-            {step === 1 && (
-              <motion.div key="step1" {...stepVariants} className="space-y-8">
-                <div>
-                  <h2 className="text-4xl font-black text-white tracking-tight uppercase">Verify Reservation</h2>
-                  <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">Step 01: Fleet & Schedule Confirmation</p>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                   <div className="glass-card p-6 flex flex-col gap-4">
-                      <div className="flex items-center gap-3 text-emerald-500">
-                        <HiOutlineCalendar size={20} />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Timeline</span>
-                      </div>
-                      <div className="space-y-4">
-                        <div className="flex justify-between">
-                          <p className="text-xs font-bold text-slate-500 uppercase">Start</p>
-                          <p className="text-sm font-black text-white">{pickupDate?.humanReadable && !isNaN(new Date(pickupDate.humanReadable).getTime()) ? new Date(pickupDate.humanReadable).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
+          <form onSubmit={handleSubmit(handlePlaceOrder, onInvalidForm)} className="relative pointer-events-auto">
+            <AnimatePresence mode="wait">
+              {step === 1 && (
+                <motion.div key="step1" {...stepVariants} className="space-y-8">
+                  <div>
+                    <h2 className="text-4xl font-black text-white tracking-tight uppercase">Verify Reservation</h2>
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">Step 01: Fleet & Schedule Confirmation</p>
+                  </div>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     <div className="glass-card p-6 flex flex-col gap-4">
+                        <div className="flex items-center gap-3 text-emerald-500">
+                          <HiOutlineCalendar size={20} />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Timeline</span>
                         </div>
-                        <div className="flex justify-between">
-                          <p className="text-xs font-bold text-slate-500 uppercase">End</p>
-                          <p className="text-sm font-black text-white">{dropoffDate?.humanReadable && !isNaN(new Date(dropoffDate.humanReadable).getTime()) ? new Date(dropoffDate.humanReadable).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
+                        <div className="space-y-4">
+                          <div className="flex justify-between">
+                            <p className="text-xs font-bold text-slate-500 uppercase">Start</p>
+                            <p className="text-sm font-black text-white">{pickupDate?.humanReadable && !isNaN(new Date(pickupDate.humanReadable).getTime()) ? new Date(pickupDate.humanReadable).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
+                          </div>
+                          <div className="flex justify-between">
+                            <p className="text-xs font-bold text-slate-500 uppercase">End</p>
+                            <p className="text-sm font-black text-white">{dropoffDate?.humanReadable && !isNaN(new Date(dropoffDate.humanReadable).getTime()) ? new Date(dropoffDate.humanReadable).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
+                          </div>
+                          <div className="flex justify-between border-t border-white/5 pt-4">
+                            <p className="text-xs font-bold text-slate-500 uppercase">Duration</p>
+                            <p className="text-sm font-black text-emerald-500">{Days} Days</p>
+                          </div>
                         </div>
-                        <div className="flex justify-between border-t border-white/5 pt-4">
-                          <p className="text-xs font-bold text-slate-500 uppercase">Duration</p>
-                          <p className="text-sm font-black text-emerald-500">{Days} Days</p>
-                        </div>
-                      </div>
-                   </div>
+                     </div>
 
-                   <div className="glass-card p-6 flex flex-col gap-4">
-                      <div className="flex items-center gap-3 text-emerald-500">
-                        <HiOutlineMapPin size={20} />
-                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Logistics</span>
-                      </div>
-                      <div className="space-y-4">
-                        <div className="flex flex-col gap-1">
-                          <p className="text-[10px] font-bold text-slate-500 uppercase">Pickup Location</p>
-                          <p className="text-xs font-bold text-white">{pickup_location}</p>
+                     <div className="glass-card p-6 flex flex-col gap-4">
+                        <div className="flex items-center gap-3 text-emerald-500">
+                          <HiOutlineMapPin size={20} />
+                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Logistics</span>
                         </div>
-                        <div className="flex flex-col gap-1">
-                          <p className="text-[10px] font-bold text-slate-500 uppercase">Return Terminal</p>
-                          <p className="text-xs font-bold text-white">{dropoff_location}</p>
+                        <div className="space-y-4">
+                          <div className="flex flex-col gap-1">
+                            <p className="text-[10px] font-bold text-slate-500 uppercase">Pickup Location</p>
+                            <p className="text-xs font-bold text-white">{pickup_location}</p>
+                          </div>
+                          <div className="flex flex-col gap-1">
+                            <p className="text-[10px] font-bold text-slate-500 uppercase">Return Terminal</p>
+                            <p className="text-xs font-bold text-white">{dropoff_location}</p>
+                          </div>
                         </div>
-                      </div>
-                   </div>
-                </div>
-
-                <motion.button
-                  whileHover={{ x: 5 }}
-                  whileTap={{ scale: 0.95 }}
-                  onClick={handleNext}
-                  className="flex items-center gap-3 rounded-2xl bg-emerald-500 px-10 py-5 text-sm font-black uppercase tracking-widest text-slate-950 shadow-xl shadow-emerald-500/10"
-                >
-                  Proceed to Secure Checkout
-                  <HiOutlineArrowRight size={20} />
-                </motion.button>
-              </motion.div>
-            )}
-
-            {step === 2 && (
-              <motion.div key="step2" {...stepVariants} className="space-y-8">
-                <div>
-                  <h2 className="text-4xl font-black text-white tracking-tight uppercase">Billing Information</h2>
-                  <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">Step 02: Authorized Contact Details</p>
-                </div>
-
-                <div className="space-y-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Secure Email Address</label>
-                    <input {...register("email")} defaultValue={currentUser.email} className={inputClasses} placeholder="your@email.com" />
-                    {errors.email && <p className="text-rose-500 text-[10px] font-bold ml-2 uppercase tracking-widest">{errors.email.message}</p>}
+                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Mobile Terminal (Phone)</label>
-                    <input {...register("phoneNumber")} defaultValue={currentUser.phoneNumber} className={inputClasses} placeholder="+91 00000 00000" />
-                    {errors.phoneNumber && <p className="text-rose-500 text-[10px] font-bold ml-2 uppercase tracking-widest">{errors.phoneNumber.message}</p>}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Residency (Full Address)</label>
-                    <textarea {...register("adress")} defaultValue={currentUser.adress} rows={3} className={`${inputClasses} resize-none`} placeholder="House No, Street, Landmark..." />
-                    {errors.adress && <p className="text-rose-500 text-[10px] font-bold ml-2 uppercase tracking-widest">{errors.adress.message}</p>}
-                  </div>
-                </div>
-
-                <div className="flex gap-4">
                   <motion.button
-                    whileTap={{ scale: 0.95 }}
-                    onClick={() => setStep(1)}
-                    className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/5 px-8 py-5 text-sm font-black uppercase tracking-widest text-slate-300"
-                  >
-                    <HiOutlineArrowLeft size={20} />
-                    Back
-                  </motion.button>
-                  <motion.button
+                    type="button"
                     whileHover={{ x: 5 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={handleNext}
-                    className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-emerald-500 px-10 py-5 text-sm font-black uppercase tracking-widest text-slate-950 shadow-xl shadow-emerald-500/10"
+                    className="flex items-center gap-3 rounded-2xl bg-emerald-500 px-10 py-5 text-sm font-black uppercase tracking-widest text-slate-950 shadow-xl shadow-emerald-500/10 cursor-pointer pointer-events-auto"
                   >
-                    Finalize Transaction
+                    Proceed to Secure Checkout
                     <HiOutlineArrowRight size={20} />
                   </motion.button>
-                </div>
-              </motion.div>
-            )}
+                </motion.div>
+              )}
 
-            {step === 3 && (
-              <form onSubmit={handleSubmit(handlePlaceOrder)}>
+              {step === 2 && (
+                <motion.div key="step2" {...stepVariants} className="space-y-8">
+                  <div>
+                    <h2 className="text-4xl font-black text-white tracking-tight uppercase">Billing Information</h2>
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">Step 02: Authorized Contact Details</p>
+                  </div>
+
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Secure Email Address</label>
+                      <input {...register("email")} defaultValue={currentUser?.email} className={inputClasses} placeholder="your@email.com" />
+                      {errors.email && <p className="text-rose-500 text-[10px] font-bold ml-2 uppercase tracking-widest">{errors.email.message}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Mobile Terminal (Phone)</label>
+                      <input {...register("phoneNumber")} defaultValue={currentUser?.phoneNumber} className={inputClasses} placeholder="+91 00000 00000" />
+                      {errors.phoneNumber && <p className="text-rose-500 text-[10px] font-bold ml-2 uppercase tracking-widest">{errors.phoneNumber.message}</p>}
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-2">Residency (Full Address)</label>
+                      <textarea {...register("adress")} defaultValue={currentUser?.adress} rows={3} className={`${inputClasses} resize-none`} placeholder="House No, Street, Landmark..." />
+                      {errors.adress && <p className="text-rose-500 text-[10px] font-bold ml-2 uppercase tracking-widest">{errors.adress.message}</p>}
+                    </div>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <motion.button
+                      type="button"
+                      whileTap={{ scale: 0.95 }}
+                      onClick={() => setStep(1)}
+                      className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/5 px-8 py-5 text-sm font-black uppercase tracking-widest text-slate-300"
+                    >
+                      <HiOutlineArrowLeft size={20} />
+                      Back
+                    </motion.button>
+                    <motion.button
+                      type="button"
+                      whileHover={{ x: 5 }}
+                      whileTap={{ scale: 0.95 }}
+                      onClick={handleNext}
+                      className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-emerald-500 px-10 py-5 text-sm font-black uppercase tracking-widest text-slate-950 shadow-xl shadow-emerald-500/10 cursor-pointer pointer-events-auto"
+                    >
+                      Finalize Transaction
+                      <HiOutlineArrowRight size={20} />
+                    </motion.button>
+                  </div>
+                </motion.div>
+              )}
+
+              {step === 3 && (
                 <motion.div key="step3" {...stepVariants} className="space-y-8">
                   <div>
                     <h2 className="text-4xl font-black text-white tracking-tight uppercase">Confirm & Authorize</h2>
@@ -278,35 +291,37 @@ const CheckoutPage = () => {
                     </button>
                   </div>
 
-                  <div className="flex gap-4">
+                  <div className="flex gap-4 relative z-50">
                     <motion.button
                       type="button"
                       whileTap={{ scale: 0.95 }}
                       onClick={() => setStep(2)}
                       className="flex items-center gap-3 rounded-2xl bg-white/5 border border-white/5 px-8 py-5 text-sm font-black uppercase tracking-widest text-slate-300"
+                      disabled={isPageLoading}
                     >
                       <HiOutlineArrowLeft size={20} />
                       Refine Details
                     </motion.button>
+                    
                     <motion.button
                       type="submit"
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
                       disabled={isPageLoading}
-                      className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-emerald-500 px-10 py-5 text-sm font-black uppercase tracking-widest text-slate-950 shadow-xl shadow-emerald-500/20 disabled:opacity-50"
+                      className="flex-1 flex items-center justify-center gap-3 rounded-2xl bg-emerald-500 px-10 py-5 text-sm font-black uppercase tracking-widest text-slate-950 shadow-xl shadow-emerald-500/20 disabled:opacity-50 cursor-pointer pointer-events-auto"
                     >
                       {isPageLoading ? "Processing Authorization..." : "Authorize Rental Payment"}
                       {!isPageLoading && <HiOutlineCreditCard size={20} />}
                     </motion.button>
                   </div>
                 </motion.div>
-              </form>
-            )}
-          </AnimatePresence>
+              )}
+            </AnimatePresence>
+          </form>
         </div>
 
         {/* Right Side: Order Summary Stickey */}
-        <div className="lg:w-96">
+        <div className="lg:w-96 relative z-10 pointer-events-none">
           <div className="sticky top-32 glass-card overflow-hidden">
             <div className="aspect-video w-full overflow-hidden bg-slate-900">
                {singleVehicleDetail?.image && singleVehicleDetail.image.length > 0 && (
@@ -317,7 +332,7 @@ const CheckoutPage = () => {
               <div>
                 <p className="text-[10px] font-black text-emerald-500 uppercase tracking-[0.3em]">Precision Fleet</p>
                 <h3 className="text-xl font-black text-white tracking-tight uppercase flex items-center justify-between">
-                  {singleVehicleDetail.name}
+                  {singleVehicleDetail?.name}
                   <span className="text-xs inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-emerald-500">
                     <HiOutlineCheckBadge /> 4.9
                   </span>
@@ -327,7 +342,7 @@ const CheckoutPage = () => {
               <div className="space-y-3 border-t border-white/5 pt-6">
                 <div className="flex justify-between text-xs">
                   <span className="font-bold text-slate-500 uppercase">Base Rental</span>
-                  <span className="font-black text-white">₹{singleVehicleDetail.price} × {Days} Days</span>
+                  <span className="font-black text-white">₹{singleVehicleDetail?.price} × {Days} Days</span>
                 </div>
                 <div className="flex justify-between text-xs border-b border-white/5 pb-6">
                   <span className="font-bold text-slate-500 uppercase">Operational Fee</span>
