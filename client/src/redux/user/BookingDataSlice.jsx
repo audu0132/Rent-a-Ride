@@ -60,8 +60,16 @@ const bookingDataSlice = createSlice({
         year: dropofftime.$y,
       };
     },
+    setBasicBookingDetails: (state, action) => {
+      const { pickupDate, dropoffDate, pickup_location } = action.payload;
+      state.pickupDate = { humanReadable: pickupDate };
+      state.dropoffDate = { humanReadable: dropoffDate };
+      state.pickup_location = pickup_location;
+      state.dropoff_location = pickup_location;
+      state.pickup_district = "Local";
+    }
   },
 });
 
-export const { setSelectedData } = bookingDataSlice.actions;
+export const { setSelectedData, setBasicBookingDetails } = bookingDataSlice.actions;
 export default bookingDataSlice.reducer;

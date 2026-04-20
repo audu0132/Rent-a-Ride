@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { showVehicles } from "../../redux/user/listAllVehicleSlice";
+import { setBasicBookingDetails } from "../../redux/user/BookingDataSlice";
 import API_BASE_URL from "../../config/api";
 
 // Icons
@@ -30,6 +31,7 @@ const VehicleDetails = () => {
   
   const [activeImage, setActiveImage] = useState(0);
   const [selectedDates, setSelectedDates] = useState({ start: "", end: "" });
+  const [pickupLocation, setPickupLocation] = useState("Main Showroom, MG Road");
 
   let refreshToken = localStorage.getItem("refreshToken");
   let accessToken = localStorage.getItem('accessToken');
@@ -52,6 +54,15 @@ const VehicleDetails = () => {
   if (!singleVehicleDetail) return null;
 
   const handleBook = () => {
+    if (!selectedDates.start || !selectedDates.end) {
+      alert("Please select pick-up and drop-off dates");
+      return;
+    }
+    dispatch(setBasicBookingDetails({
+      pickupDate: selectedDates.start,
+      dropoffDate: selectedDates.end,
+      pickup_location: pickupLocation
+    }));
     navigate("/checkoutPage");
   };
 
@@ -174,14 +185,14 @@ const VehicleDetails = () => {
                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Pick-up</label>
                        <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-slate-800/50 p-4 transition-all hover:border-emerald-500/30">
                           <HiOutlineCalendar className="text-emerald-500" />
-                          <input type="date" className="bg-transparent text-sm outline-none w-full" />
+                          <input type="date" value={selectedDates.start} onChange={(e) => setSelectedDates({...selectedDates, start: e.target.value})} className="bg-transparent text-sm outline-none w-full [color-scheme:dark]" />
                        </div>
                     </div>
                     <div className="space-y-2">
                        <label className="text-xs font-bold uppercase tracking-widest text-slate-500">Drop-off</label>
                        <div className="flex items-center gap-3 rounded-2xl border border-white/5 bg-slate-800/50 p-4 transition-all hover:border-emerald-500/30">
                           <HiOutlineCalendar className="text-emerald-500" />
-                          <input type="date" className="bg-transparent text-sm outline-none w-full" />
+                          <input type="date" value={selectedDates.end} onChange={(e) => setSelectedDates({...selectedDates, end: e.target.value})} className="bg-transparent text-sm outline-none w-full [color-scheme:dark]" />
                        </div>
                     </div>
                  </div>
