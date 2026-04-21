@@ -143,6 +143,12 @@ export async function displayRazorpay(values, navigate, dispatch) {
         };
 
         const paymentObject = new window.Razorpay(options);
+
+        setTimeout(() => {
+          console.warn("Fallback triggered: Razorpay not responding");
+          resolve({ success: false, message: "Timeout - Razorpay not opened" });
+        }, 15000); // 15 sec safety
+        
         
         // Listeners for deeper failures
         paymentObject.on('payment.failed', function (response) {
