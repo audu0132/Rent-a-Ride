@@ -49,7 +49,7 @@ export const displayRazorpay = async (orderData, navigate, dispatch) => {
       return { success: false, message: "Razorpay SDK failed to load" };
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/payment/order`, {
+    const response = await fetch(`${API_BASE_URL}/api/user/razorpay`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
