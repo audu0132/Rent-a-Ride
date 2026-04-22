@@ -17,13 +17,20 @@ export function loadScript(src) {
 // Fetch latest booking and update redux
 export const fetchLatestBooking = async (user_id, dispatch) => {
   try {
+    const refreshToken = localStorage.getItem("refreshToken");
+    const accessToken = localStorage.getItem("accessToken");
+    
     const response = await fetch(`${API_BASE_URL}/api/user/latestbookings`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { 
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${refreshToken || ""},${accessToken || ""}`
+      },
       body: JSON.stringify({ user_id }),
     });
 
     if (!response.ok) {
+      toast.error("Failed to fetch latest booking.");
       throw new Error("Failed to fetch latest booking");
     }
 
@@ -41,6 +48,10 @@ export const fetchLatestBooking = async (user_id, dispatch) => {
 export const displayRazorpay = async (orderData, navigate, dispatch) => {
   try {
     console.log("Starting Razorpay...");
+    
+    const refreshToken = localStorage.getItem("refreshToken");
+    const accessToken = localStorage.getItem("accessToken");
+    console.log("Access Token:", accessToken);
 
     const scriptLoaded = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
 
@@ -53,6 +64,7 @@ export const displayRazorpay = async (orderData, navigate, dispatch) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${refreshToken || ""},${accessToken || ""}`
       },
       body: JSON.stringify(orderData),
     });
@@ -60,6 +72,7 @@ export const displayRazorpay = async (orderData, navigate, dispatch) => {
     if (!response.ok) {
       const errorText = await response.text();
       console.error("Order API Error:", errorText);
+      toast.error("Failed to create Razorpay order.");
       throw new Error("Failed to create Razorpay order");
     }
 
