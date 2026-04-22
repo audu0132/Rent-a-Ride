@@ -44,7 +44,7 @@ const CheckoutPage = () => {
 
   const [discount, setDiscount] = useState(0);
   const couponValue = watch("coupon");
-  
+
   const handleCoupon = () => {
     if (couponValue === "WELCOME50") {
       setDiscount(50);
@@ -68,7 +68,7 @@ const CheckoutPage = () => {
 
   const handlePlaceOrder = async (formData) => {
     console.log("Button clicked!", formData);
-    
+
     if (isPageLoading) return; // Prevent double firing while active
 
     const orderData = {
@@ -89,12 +89,12 @@ const CheckoutPage = () => {
     try {
       console.log("API call started with:", orderData);
       dispatch(setPageLoading(true));
-      
+
       const result = await displayRazorpay(orderData, navigate, dispatch);
       console.log("API response received:", result);
-      
+
       if (result && !result.success && result.message) {
-         console.warn("Order flow handled internal notification:", result.message);
+        console.warn("Order flow handled internal notification:", result.message);
       }
     } catch (err) {
       console.error("Critical order handler failure:", err);
@@ -116,6 +116,12 @@ const CheckoutPage = () => {
     }
   }, [paymentDone, data, dispatch]);
 
+  useEffect(() => {
+     dispatch(setPageLoading(false));
+  }, []);
+
+  
+
   const stepVariants = {
     initial: { opacity: 0, x: 20 },
     animate: { opacity: 1, x: 0 },
@@ -127,19 +133,18 @@ const CheckoutPage = () => {
   return (
     <div className="min-h-screen bg-slate-950 pt-32 pb-20 px-6 lg:px-20 relative z-0">
       <Toaster richColors position="top-right" />
-      
+
       <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-12 relative">
-        
+
         {/* Left Side: Wizard Flow */}
         <div className="flex-1 space-y-12">
-          
+
           {/* Progress Indicator */}
           <div className="flex items-center gap-4">
             {[1, 2, 3].map((i) => (
               <div key={i} className="flex items-center gap-4">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-xl font-black transition-all ${
-                  step >= i ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20" : "bg-white/5 text-slate-500"
-                }`}>
+                <div className={`flex h-10 w-10 items-center justify-center rounded-xl font-black transition-all ${step >= i ? "bg-emerald-500 text-slate-950 shadow-lg shadow-emerald-500/20" : "bg-white/5 text-slate-500"
+                  }`}>
                   {i}
                 </div>
                 {i < 3 && <div className={`h-1 w-12 rounded-full ${step > i ? "bg-emerald-500" : "bg-white/5"}`} />}
@@ -155,45 +160,45 @@ const CheckoutPage = () => {
                     <h2 className="text-4xl font-black text-white tracking-tight uppercase">Verify Reservation</h2>
                     <p className="text-slate-500 font-bold uppercase tracking-widest text-[10px] mt-2">Step 01: Fleet & Schedule Confirmation</p>
                   </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     <div className="glass-card p-6 flex flex-col gap-4">
-                        <div className="flex items-center gap-3 text-emerald-500">
-                          <HiOutlineCalendar size={20} />
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Timeline</span>
-                        </div>
-                        <div className="space-y-4">
-                          <div className="flex justify-between">
-                            <p className="text-xs font-bold text-slate-500 uppercase">Start</p>
-                            <p className="text-sm font-black text-white">{pickupDate?.humanReadable && !isNaN(new Date(pickupDate.humanReadable).getTime()) ? new Date(pickupDate.humanReadable).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
-                          </div>
-                          <div className="flex justify-between">
-                            <p className="text-xs font-bold text-slate-500 uppercase">End</p>
-                            <p className="text-sm font-black text-white">{dropoffDate?.humanReadable && !isNaN(new Date(dropoffDate.humanReadable).getTime()) ? new Date(dropoffDate.humanReadable).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
-                          </div>
-                          <div className="flex justify-between border-t border-white/5 pt-4">
-                            <p className="text-xs font-bold text-slate-500 uppercase">Duration</p>
-                            <p className="text-sm font-black text-emerald-500">{Days} Days</p>
-                          </div>
-                        </div>
-                     </div>
 
-                     <div className="glass-card p-6 flex flex-col gap-4">
-                        <div className="flex items-center gap-3 text-emerald-500">
-                          <HiOutlineMapPin size={20} />
-                          <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Logistics</span>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="glass-card p-6 flex flex-col gap-4">
+                      <div className="flex items-center gap-3 text-emerald-500">
+                        <HiOutlineCalendar size={20} />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Timeline</span>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="flex justify-between">
+                          <p className="text-xs font-bold text-slate-500 uppercase">Start</p>
+                          <p className="text-sm font-black text-white">{pickupDate?.humanReadable && !isNaN(new Date(pickupDate.humanReadable).getTime()) ? new Date(pickupDate.humanReadable).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
                         </div>
-                        <div className="space-y-4">
-                          <div className="flex flex-col gap-1">
-                            <p className="text-[10px] font-bold text-slate-500 uppercase">Pickup Location</p>
-                            <p className="text-xs font-bold text-white">{pickup_location}</p>
-                          </div>
-                          <div className="flex flex-col gap-1">
-                            <p className="text-[10px] font-bold text-slate-500 uppercase">Return Terminal</p>
-                            <p className="text-xs font-bold text-white">{dropoff_location}</p>
-                          </div>
+                        <div className="flex justify-between">
+                          <p className="text-xs font-bold text-slate-500 uppercase">End</p>
+                          <p className="text-sm font-black text-white">{dropoffDate?.humanReadable && !isNaN(new Date(dropoffDate.humanReadable).getTime()) ? new Date(dropoffDate.humanReadable).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : 'N/A'}</p>
                         </div>
-                     </div>
+                        <div className="flex justify-between border-t border-white/5 pt-4">
+                          <p className="text-xs font-bold text-slate-500 uppercase">Duration</p>
+                          <p className="text-sm font-black text-emerald-500">{Days} Days</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="glass-card p-6 flex flex-col gap-4">
+                      <div className="flex items-center gap-3 text-emerald-500">
+                        <HiOutlineMapPin size={20} />
+                        <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Logistics</span>
+                      </div>
+                      <div className="space-y-4">
+                        <div className="flex flex-col gap-1">
+                          <p className="text-[10px] font-bold text-slate-500 uppercase">Pickup Location</p>
+                          <p className="text-xs font-bold text-white">{pickup_location}</p>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <p className="text-[10px] font-bold text-slate-500 uppercase">Return Terminal</p>
+                          <p className="text-xs font-bold text-white">{dropoff_location}</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
 
                   <motion.button
@@ -269,13 +274,13 @@ const CheckoutPage = () => {
 
                   <div className="glass-card p-8 border-emerald-500/20 bg-emerald-500/5">
                     <div className="flex items-start gap-4">
-                        <div className="h-12 w-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-slate-950">
-                          <HiOutlineShieldCheck size={28} />
-                        </div>
-                        <div className="flex-1">
-                          <h4 className="text-lg font-black text-white uppercase tracking-tight">Security Guaranteed</h4>
-                          <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Encrypted SSL transaction via Razorpay Secure 3.0</p>
-                        </div>
+                      <div className="h-12 w-12 rounded-2xl bg-emerald-500 flex items-center justify-center text-slate-950">
+                        <HiOutlineShieldCheck size={28} />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-black text-white uppercase tracking-tight">Security Guaranteed</h4>
+                        <p className="text-xs font-bold text-slate-400 mt-1 uppercase tracking-widest">Encrypted SSL transaction via Razorpay Secure 3.0</p>
+                      </div>
                     </div>
                   </div>
 
@@ -302,7 +307,7 @@ const CheckoutPage = () => {
                       <HiOutlineArrowLeft size={20} />
                       Refine Details
                     </motion.button>
-                    
+
                     <motion.button
                       type="submit"
                       whileHover={{ scale: 1.02 }}
@@ -324,9 +329,9 @@ const CheckoutPage = () => {
         <div className="lg:w-96 relative z-10 pointer-events-none">
           <div className="sticky top-32 glass-card overflow-hidden">
             <div className="aspect-video w-full overflow-hidden bg-slate-900">
-               {singleVehicleDetail?.image && singleVehicleDetail.image.length > 0 && (
-                 <img src={singleVehicleDetail.image[0]} className="h-full w-full object-contain" alt="fleet" />
-               )}
+              {singleVehicleDetail?.image && singleVehicleDetail.image.length > 0 && (
+                <img src={singleVehicleDetail.image[0]} className="h-full w-full object-contain" alt="fleet" />
+              )}
             </div>
             <div className="p-8 space-y-6">
               <div>
@@ -364,10 +369,10 @@ const CheckoutPage = () => {
               </div>
 
               <div className="bg-slate-900/50 rounded-2xl p-4 border border-white/5 flex items-center gap-3">
-                 <HiOutlineShieldCheck className="text-emerald-500" size={24} />
-                 <p className="text-[9px] font-bold text-slate-500 uppercase leading-relaxed tracking-wider">
-                   Full collision waiver included. Verified fleet maintenance records confirmed for this vehicle.
-                 </p>
+                <HiOutlineShieldCheck className="text-emerald-500" size={24} />
+                <p className="text-[9px] font-bold text-slate-500 uppercase leading-relaxed tracking-wider">
+                  Full collision waiver included. Verified fleet maintenance records confirmed for this vehicle.
+                </p>
               </div>
             </div>
           </div>
