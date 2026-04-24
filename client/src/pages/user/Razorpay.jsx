@@ -1,11 +1,16 @@
 import { toast } from "sonner";
-import { setLatestBooking, setisPaymentDone } from "../../redux/user/LatestBookingsSlice";
+import {
+  setLatestBooking,
+  setisPaymentDone,
+} from "../../redux/user/LatestBookingsSlice";
 import { setIsSweetAlert, setPageLoading } from "../../redux/user/userSlice";
 import API_BASE_URL from "../../config/api";
 
-// Load Razorpay script
 export function loadScript(src) {
   return new Promise((resolve) => {
+    const existingScript = document.querySelector(`script[src="${src}"]`);
+    if (existingScript) return resolve(true);
+
     const script = document.createElement("script");
     script.src = src;
     script.onload = () => resolve(true);
@@ -14,23 +19,20 @@ export function loadScript(src) {
   });
 }
 
-// Fetch latest booking and update redux
 export const fetchLatestBooking = async (user_id, dispatch) => {
   try {
-    const refreshToken = localStorage.getItem("refreshToken");
     const accessToken = localStorage.getItem("accessToken");
-    
+
     const response = await fetch(`${API_BASE_URL}/api/user/latestbookings`, {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${refreshToken || ""},${accessToken || ""}`
+        Authorization: `Bearer ${accessToken || ""}`,
       },
       body: JSON.stringify({ user_id }),
     });
 
     if (!response.ok) {
-      toast.error("Failed to fetch latest booking.");
       throw new Error("Failed to fetch latest booking");
     }
 
@@ -44,16 +46,23 @@ export const fetchLatestBooking = async (user_id, dispatch) => {
   }
 };
 
-// Razorpay payment function
 export const displayRazorpay = async (orderData, navigate, dispatch) => {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 15000);
+
   try {
     console.log("Starting Razorpay...");
-    
-    const refreshToken = localStorage.getItem("refreshToken");
-    const accessToken = localStorage.getItem("accessToken");
-    console.log("Access Token:", accessToken);
 
-    const scriptLoaded = await loadScript("https://checkout.razorpay.com/v1/checkout.js");
+    const accessToken = localStorage.getItem("accessToken");
+
+    if (!accessToken) {
+      toast.error("Login session expired. Please login again.");
+      return { success: false, message: "Access token missing" };
+    }
+
+    const scriptLoaded = await loadScript(
+      "https://checkout.razorpay.com/v1/checkout.js"
+    );
 
     if (!scriptLoaded) {
       toast.error("Razorpay SDK failed to load.");
@@ -64,16 +73,20 @@ export const displayRazorpay = async (orderData, navigate, dispatch) => {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${refreshToken || ""},${accessToken || ""}`
+        Authorization: `Bearer ${accessToken}`,
       },
       body: JSON.stringify(orderData),
+      signal: controller.signal,
     });
 
+    clearTimeout(timeoutId);
+
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("Order API Error:", errorText);
-      toast.error("Failed to create Razorpay order.");
-      throw new Error("Failed to create Razorpay order");
+      const errorData = await response.json().catch(() => ({}));
+      const msg =
+        errorData?.message || `Failed to create Razorpay order (${response.status})`;
+      toast.error(msg);
+      return { success: false, message: msg };
     }
 
     const data = await response.json();
@@ -84,73 +97,105 @@ export const displayRazorpay = async (orderData, navigate, dispatch) => {
       return { success: false, message: "Order ID not received" };
     }
 
-    const options = {
-      key: import.meta.env.VITE_RAZORPAY_KEY,
-      amount: data.amount,
-      currency: data.currency,
-      name: "Rent A Ride",
-      description: "Vehicle Booking",
-      order_id: data.id,
+    return await new Promise((resolve) => {
+      const options = {
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID || import.meta.env.VITE_RAZORPAY_KEY,
+        amount: data.amount,
+        currency: data.currency || "INR",
+        name: "Rent A Ride",
+        description: "Vehicle Booking",
+        order_id: data.id,
 
-      handler: async function (response) {
-        try {
-          console.log("Payment Success:", response);
+        handler: async function (paymentResponse) {
+          try {
+            console.log("Payment Success:", paymentResponse);
 
-          toast.success("Payment successful!");
+            const bookingPayload = {
+              ...orderData,
+              razorpayPaymentId: paymentResponse.razorpay_payment_id,
+              razorpayOrderId: paymentResponse.razorpay_order_id,
+              razorpaySignature: paymentResponse.razorpay_signature,
+            };
 
-          if (orderData.user_id) {
-            await fetchLatestBooking(orderData.user_id, dispatch);
+            const bookRes = await fetch(`${API_BASE_URL}/api/user/bookCar`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${accessToken}`,
+              },
+              body: JSON.stringify(bookingPayload),
+            });
+
+            if (!bookRes.ok) {
+              throw new Error("Payment done, but booking save failed.");
+            }
+
+            toast.success("Payment successful!");
+
+            if (orderData.user_id) {
+              await fetchLatestBooking(orderData.user_id, dispatch);
+            }
+
+            dispatch(setIsSweetAlert(true));
+            dispatch(setisPaymentDone(true));
+            navigate("/");
+
+            resolve({ success: true, message: "Payment successful" });
+          } catch (error) {
+            console.error("Post-payment error:", error);
+            toast.error(error.message || "Payment done, but booking update failed.");
+            resolve({ success: false, message: error.message });
+          } finally {
+            dispatch(setPageLoading(false));
           }
-
-          dispatch(setIsSweetAlert(true));
-          dispatch(setisPaymentDone(true));
-
-          navigate("/success");
-        } catch (error) {
-          console.error("Post-payment error:", error);
-          toast.error("Payment done, but booking update failed.");
-        }
-      },
-
-      prefill: {
-        name: orderData.username || "",
-        email: orderData.email || "",
-        contact: orderData.phoneNumber || "",
-      },
-
-      theme: {
-        color: "#10b981",
-      },
-
-      modal: {
-        ondismiss: function () {
-          console.log("Razorpay popup closed by user");
-          toast.error("Payment popup closed.");
         },
-      },
-    };
 
-    const paymentObject = new window.Razorpay(options);
+        prefill: {
+          name: orderData.username || "",
+          email: orderData.email || "",
+          contact: orderData.phoneNumber || "",
+        },
 
-    paymentObject.on("payment.failed", function (response) {
-      console.error("Payment Failed:", response.error);
-      toast.error(response?.error?.description || "Payment failed");
+        theme: {
+          color: "#10b981",
+        },
+
+        modal: {
+          ondismiss: function () {
+            toast.error("Payment popup closed.");
+            dispatch(setPageLoading(false));
+            resolve({ success: false, message: "Payment popup closed" });
+          },
+        },
+      };
+
+      const paymentObject = new window.Razorpay(options);
+
+      paymentObject.on("payment.failed", function (response) {
+        console.error("Payment Failed:", response.error);
+        toast.error(response?.error?.description || "Payment failed");
+        dispatch(setPageLoading(false));
+        resolve({ success: false, message: "Payment failed" });
+      });
+
+      paymentObject.open();
     });
-
-    paymentObject.open();
-
-    return { success: true };
   } catch (error) {
+    clearTimeout(timeoutId);
+
+    const msg =
+      error.name === "AbortError"
+        ? "Backend is taking too long. Please try again."
+        : error.message || "Something went wrong during payment";
+
     console.error("Razorpay Error:", error);
-    toast.error(error.message || "Something went wrong during payment");
-    return { success: false, message: error.message };
+    toast.error(msg);
+    return { success: false, message: msg };
   } finally {
     dispatch(setPageLoading(false));
   }
 };
 
-const Razorpay = () => {
-  return <div></div>;
-};
+const Razorpay = () => null;
 
 export default Razorpay;

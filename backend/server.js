@@ -54,6 +54,14 @@ const corsOptions = {
 app.use(cors(corsOptions));
 app.options("*", cors(corsOptions)); // Handle all preflight requests
 
+
+app.get("/", (req, res) => {
+  res.json({
+    success: true,
+    message: "Rent-a-Ride backend is running"
+  });
+});
+
 // ✅ Cloudinary
 app.use("*", cloudinaryConfig);
 
