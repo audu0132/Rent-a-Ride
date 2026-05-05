@@ -67,7 +67,7 @@ function AvailableVehiclesAfterSearch() {
   if (isLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-[#020617] text-white">
-        <div className="text-xl font-semibold">Loading vehicles...</div>
+        <div className="text-xl font-semibold animate-pulse tracking-wides text-emerald-200">Loading vehicles...</div>
       </div>
     );
   }

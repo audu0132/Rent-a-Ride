@@ -48,7 +48,7 @@ export const fetchLatestBooking = async (user_id, dispatch) => {
 
 export const displayRazorpay = async (orderData, navigate, dispatch) => {
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 15000);
+  const timeoutId = setTimeout(() => controller.abort(), 45000);
 
   try {
     console.log("Starting Razorpay...");

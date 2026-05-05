@@ -5,7 +5,7 @@ import { updateUser ,deleteUser , signOut } from "../controllers/userControllers
 import { checkAvailability, listAllVehicles, searchCar, showVehicleDetails } from "../controllers/userControllers/userAllVehiclesController.js";
 import { editUserProfile } from "../controllers/userControllers/userProfileController.js";
 import { BookCar, razorpayOrder, getVehiclesWithoutBooking, filterVehicles, showOneofkind, showAllVariants, findBookingsOfUser, sendBookingDetailsEamil, latestbookings } from "../controllers/userControllers/userBookingController.js";
-
+import { createRazorpayOrder } from "../controllers/userControllers/razorpayController.js";
 
 const router = express.Router()
 
@@ -18,9 +18,9 @@ router.get('/signout',signOut)
 router.get('/listAllVehicles',listAllVehicles)
 router.post('/showVehicleDetails',showVehicleDetails)
 router.post('/editUserProfile/:id',editUserProfile)
-// router.post('/searchCar',searchCar)
-// router.post('/checkAvailability',checkAvailability)
-router.post('/razorpay',verifyToken,razorpayOrder)
+router.post('/searchCar',searchCar)
+router.post('/checkAvailability',checkAvailability)
+router.post('/razorpay',verifyToken,createRazorpayOrder)
 router.post('/bookCar',BookCar)
 router.post('/filterVehicles',filterVehicles)
 router.post('/getVehiclesWithoutBooking',getVehiclesWithoutBooking,showAllVariants)
