@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Booking from "../../models/BookingModel.js";
 import { errorHandler } from "../../utils/error.js";
 import Razorpay from "razorpay";
+import crypto from "crypto"; // ✅ ADDED
 import { availableAtDate } from "../../services/checkAvailableVehicle.js";
 import Vehicle from "../../models/vehicleModel.js";
 import nodemailer from "nodemailer";
@@ -9,7 +10,7 @@ import nodemailer from "nodemailer";
 export const BookCar = async (req, res, next) => {
   try {
     if (!req.body) {
-      next(errorHandler(401, "bad request on body"));
+      return next(errorHandler(401, "bad request on body"));
     }
 
     const {
@@ -23,7 +24,21 @@ export const BookCar = async (req, res, next) => {
       pickup_district,
       razorpayPaymentId,
       razorpayOrderId,
+      razorpaySignature, // ✅ ADDED
     } = req.body;
+
+    // ✅ ADDED: Verify Razorpay signature before saving booking
+    const generatedSignature = crypto
+      .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+      .update(`${razorpayOrderId}|${razorpayPaymentId}`)
+      .digest("hex");
+
+    if (generatedSignature !== razorpaySignature) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid signature",
+      });
+    }
 
     const book = new Booking({
       pickupDate,
@@ -36,8 +51,10 @@ export const BookCar = async (req, res, next) => {
       totalPrice,
       razorpayPaymentId,
       razorpayOrderId,
+      razorpaySignature, // ✅ ADDED
       status: "booked",
     });
+
     if (!book) {
       console.log("not booked");
       return;
@@ -54,45 +71,47 @@ export const BookCar = async (req, res, next) => {
   }
 };
 
-//createing razorpay instance
+// ✅ FIXED: was using wrong env var RAZORPAY_SECRET → RAZORPAY_KEY_SECRET
 export const razorpayOrder = async (req, res, next) => {
   try {
     const { totalPrice, dropoff_location, pickup_district, pickup_location } =
       req.body;
 
-    console.log(totalPrice)
+    console.log(totalPrice);
+
     if (
       !totalPrice ||
       !dropoff_location ||
       !pickup_district ||
       !pickup_location
     ) {
-
-      return next(errorHandler(400, "Missing Required Feilds Process Cancelled")) ;
+      return next(errorHandler(400, "Missing Required Fields Process Cancelled"));
     }
+
     const instance = new Razorpay({
       key_id: process.env.RAZORPAY_KEY_ID,
-      key_secret: process.env.RAZORPAY_SECRET,
+      key_secret: process.env.RAZORPAY_KEY_SECRET, // ✅ FIXED (was RAZORPAY_SECRET)
     });
 
     const options = {
-      amount: totalPrice * 100, // amount in smallest currency unit
+      amount: Math.round(Number(totalPrice) * 100),
       currency: "INR",
+      receipt: `receipt_${Date.now()}`,
     };
 
     const order = await instance.orders.create(options);
 
-    if (!order) return res.status(500).send("Some error occured");
+    if (!order) return res.status(500).send("Some error occurred");
+
     res.status(200).json(order);
   } catch (error) {
     console.log(error);
-    next(errorHandler(500, "error occured in razorpayorder"));
+    next(errorHandler(500, "error occurred in razorpayOrder"));
   }
 };
 
-// -------------------- -------------------
+// -------------------------------------------------------
 
-// getting vehicles without booking for selected Date and location
 export const getVehiclesWithoutBooking = async (req, res, next) => {
   try {
     const { pickUpDistrict, pickUpLocation, pickupDate, dropOffDate, model } =
@@ -104,7 +123,6 @@ export const getVehiclesWithoutBooking = async (req, res, next) => {
     if (!pickupDate || !dropOffDate)
       return next(errorHandler(409, "pickup , dropffdate  is required"));
 
-    // Check if pickupDate is before dropOffDate
     if (pickupDate >= dropOffDate)
       return next(errorHandler(409, "Invalid date range"));
 
@@ -131,13 +149,20 @@ export const getVehiclesWithoutBooking = async (req, res, next) => {
     console.log("==> TOTAL VEHICLES IN DB:", vehiclesAvailableAtDate.length);
     console.log("==> FILTERED VEHICLES:", availableVehicles.length);
 
-    import("fs").then(fs => {
-      fs.writeFileSync("last_search.json", JSON.stringify({
-        body: req.body,
-        total: vehiclesAvailableAtDate.length,
-        filtered: availableVehicles.length,
-        available: availableVehicles
-      }, null, 2));
+    import("fs").then((fs) => {
+      fs.writeFileSync(
+        "last_search.json",
+        JSON.stringify(
+          {
+            body: req.body,
+            total: vehiclesAvailableAtDate.length,
+            filtered: availableVehicles.length,
+            available: availableVehicles,
+          },
+          null,
+          2
+        )
+      );
     });
 
     if (!availableVehicles) {
@@ -147,7 +172,6 @@ export const getVehiclesWithoutBooking = async (req, res, next) => {
       });
     }
 
-    // If there is no next middleware after this one, send the response
     if (!req.route || !req.route.stack || req.route.stack.length === 1) {
       console.log("hello");
       console.log({ success: "true", data: availableVehicles });
@@ -157,7 +181,6 @@ export const getVehiclesWithoutBooking = async (req, res, next) => {
       });
     }
 
-    // If there is a next middleware, pass control to it
     res.locals.actionResult = [availableVehicles, model];
     next();
   } catch (error) {
@@ -168,7 +191,6 @@ export const getVehiclesWithoutBooking = async (req, res, next) => {
   }
 };
 
-//getting all variants of a model which are not booked
 export const showAllVariants = async (req, res, next) => {
   try {
     const actionResult = res.locals.actionResult;
@@ -187,7 +209,6 @@ export const showAllVariants = async (req, res, next) => {
   }
 };
 
-//show i if more vehcles with same model available
 export const showOneofkind = async (req, res, next) => {
   try {
     const actionResult = res.locals.actionResult;
@@ -219,7 +240,6 @@ export const showOneofkind = async (req, res, next) => {
   }
 };
 
-//  filtering vehicles
 export const filterVehicles = async (req, res, next) => {
   try {
     if (!req.body) {
@@ -234,7 +254,6 @@ export const filterVehicles = async (req, res, next) => {
       const carTypes = [];
       data.forEach((cur) => {
         if (cur.type === "car_type") {
-          // Extract the first key of the object and push it into 'cartypes' array
           const firstKey = Object.keys(cur).find((key) => key !== "type");
           if (firstKey) {
             carTypes.push(firstKey);
@@ -244,11 +263,8 @@ export const filterVehicles = async (req, res, next) => {
 
       const transmitions = [];
       data.forEach((cur) => {
-        // If the current element has type equal to 'transmition'
         if (cur.type === "transmition") {
-          // Iterate through each key of the current element
           Object.keys(cur).forEach((key) => {
-            // Exclude the 'type' key and push only keys with truthy values into 'transmitions' array
             if (key !== "type" && cur[key]) {
               transmitions.push(key);
             }
@@ -263,7 +279,7 @@ export const filterVehicles = async (req, res, next) => {
             transmitions.length > 0
               ? { transmition: { $in: transmitions } }
               : null,
-          ].filter((condition) => condition !== null), // Remove null conditions
+          ].filter((condition) => condition !== null),
         },
       };
     };
@@ -328,7 +344,6 @@ export const findBookingsOfUser = async (req, res, next) => {
   }
 };
 
-//api to ge the latestbookings details
 export const latestbookings = async (req, res, next) => {
   try {
     const { user_id } = req.body;
@@ -359,20 +374,12 @@ export const latestbookings = async (req, res, next) => {
         },
       },
       {
-        $sort:
-          /**
-           * Provide any number of field/order pairs.
-           */
-          {
-            "bookingDetails.createdAt": -1,
-          },
+        $sort: {
+          "bookingDetails.createdAt": -1,
+        },
       },
       {
-        $limit:
-          /**
-           * Provide the number of documents to limit.
-           */
-          1,
+        $limit: 1,
       },
     ]);
 
@@ -387,7 +394,6 @@ export const latestbookings = async (req, res, next) => {
   }
 };
 
-//send booking details to user email
 export const sendBookingDetailsEamil = (req, res, next) => {
   try {
     console.log("hello");
@@ -413,34 +419,20 @@ export const sendBookingDetailsEamil = (req, res, next) => {
               <hr>
               <p><strong>Booking Id:</strong> ${bookingDetails._id}</p>
               <p><strong>Total Amount:</strong> ${bookingDetails.totalPrice}</p>
-              <p><strong>Pickup Location:</strong> ${
-                bookingDetails.pickUpLocation
-              }</p>
-              <p><strong>Pickup Date:</strong> ${pickupDate.getDate()}/${
-        pickupDate.getMonth() + 1
-      }/${pickupDate.getFullYear()} ${pickupDate.getHours()}:${pickupDate.getMinutes()}</p>
-              <p><strong>Dropoff Location:</strong> ${
-                bookingDetails.dropOffLocation
-              }</p>
-              <p><strong>Dropoff Date:</strong> ${dropOffDate.getDate()}/${
-        dropOffDate.getMonth() + 1
-      }/${dropOffDate.getFullYear()} ${dropOffDate.getHours()}:${dropOffDate.getMinutes()}</p>
+              <p><strong>Pickup Location:</strong> ${bookingDetails.pickUpLocation}</p>
+              <p><strong>Pickup Date:</strong> ${pickupDate.getDate()}/${pickupDate.getMonth() + 1}/${pickupDate.getFullYear()} ${pickupDate.getHours()}:${pickupDate.getMinutes()}</p>
+              <p><strong>Dropoff Location:</strong> ${bookingDetails.dropOffLocation}</p>
+              <p><strong>Dropoff Date:</strong> ${dropOffDate.getDate()}/${dropOffDate.getMonth() + 1}/${dropOffDate.getFullYear()} ${dropOffDate.getHours()}:${dropOffDate.getMinutes()}</p>
               <h2>Vehicle Details</h2>
               <hr>
-              <p><strong>Vehicle Number:</strong> ${
-                vehicleDetails.registeration_number
-              }</p>
+              <p><strong>Vehicle Number:</strong> ${vehicleDetails.registeration_number}</p>
               <p><strong>Model:</strong> ${vehicleDetails.model}</p>
               <p><strong>Company:</strong> ${vehicleDetails.company}</p>
               <p><strong>Vehicle Type:</strong> ${vehicleDetails.car_type}</p>
               <p><strong>Seats:</strong> ${vehicleDetails.seats}</p>
               <p><strong>Fuel Type:</strong> ${vehicleDetails.fuel_type}</p>
-              <p><strong>Transmission:</strong> ${
-                vehicleDetails.transmition
-              }</p>
-              <p><strong>Manufacturing Year:</strong> ${
-                vehicleDetails.year_made
-              }</p>
+              <p><strong>Transmission:</strong> ${vehicleDetails.transmition}</p>
+              <p><strong>Manufacturing Year:</strong> ${vehicleDetails.year_made}</p>
           </div>
       `;
     };

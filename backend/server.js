@@ -83,7 +83,7 @@ app.use((err, req, res, next) => {
 
 // ✅ MongoDB & Start
 mongoose
-  .connect(process.env.MONGODB_URI)
+  .connect(process.env.MONGODB_URI || process.env.MONGO_URL)
   .then(() => {
     console.log("MongoDB connected");
     app.listen(PORT, () => {

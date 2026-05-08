@@ -11,7 +11,7 @@ import API_BASE_URL from "../../config/api";
 const schema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters" }),
   email: z.string().email({ message: "Please enter a valid email address" }),
-  password: z.string().min(4, { message: "Password must be at least 4 characters" }),
+  password: z.string().min(6, { message: "Password must be at least 6 characters for strong security" }),
 });
 
 function SignUp() {
@@ -21,12 +21,16 @@ function SignUp() {
     formState: { errors },
   } = useForm({ resolver: zodResolver(schema) });
 
-  const [isError, setError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const [isLoading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const onSubmit = async (formData) => {
     setLoading(true);
+    setErrorMessage(""); // Clear previous errors
+    console.log("Submitting Signup request with data:", formData);
+    console.log("Target API:", `${API_BASE_URL}/api/auth/signup`);
+
     try {
       const res = await fetch(`${API_BASE_URL}/api/auth/signup`, {
         method: "POST",
@@ -34,19 +38,22 @@ function SignUp() {
         body: JSON.stringify(formData),
       });
 
+      console.log("Response status:", res.status);
       const data = await res.json();
+      console.log("Response data:", data);
+
       setLoading(false);
 
       if (!res.ok) {
-        setError(true);
+        setErrorMessage(data.message || "An error occurred during signup");
         return;
       }
 
-      setError(false);
       navigate("/signin");
     } catch (error) {
+      console.error("Signup Fetch Error:", error);
       setLoading(false);
-      setError(true);
+      setErrorMessage("Backend is currently unavailable. Please try again later.");
     }
   };
 
@@ -189,13 +196,13 @@ function SignUp() {
               )}
             </motion.button>
 
-            {isError && (
+            {errorMessage && (
               <motion.div 
                 initial={{ opacity: 0 }} 
                 animate={{ opacity: 1 }}
                 className="rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-center text-xs font-semibold text-rose-500"
               >
-                Something went wrong. Please try again.
+                {errorMessage}
               </motion.div>
             )}
           </motion.form>
