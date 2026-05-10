@@ -14,7 +14,8 @@ const userSchema = new mongoose.Schema(
     },
     phoneNumber:{
       type:String,
-      unique:true
+      //unique:true, i need this for login but with sparse:
+      sparse:true
     },
     adress:{
       type:String,
