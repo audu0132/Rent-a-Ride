@@ -86,6 +86,13 @@ export const displayRazorpay = async (orderData, navigate, dispatch) => {
       const msg =
         errorData?.message || `Failed to create Razorpay order (${response.status})`;
       toast.error(msg);
+      if (response.status === 403) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        setTimeout(() => {
+          window.location.href = "/signin";
+        }, 1500);
+      }
       return { success: false, message: msg };
     }
 
@@ -127,6 +134,13 @@ export const displayRazorpay = async (orderData, navigate, dispatch) => {
             });
 
             if (!bookRes.ok) {
+              if (bookRes.status === 403) {
+                localStorage.removeItem("accessToken");
+                localStorage.removeItem("refreshToken");
+                setTimeout(() => {
+                  window.location.href = "/signin";
+                }, 1500);
+              }
               throw new Error("Payment done, but booking save failed.");
             }
 

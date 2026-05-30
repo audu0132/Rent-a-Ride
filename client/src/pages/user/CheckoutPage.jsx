@@ -59,7 +59,7 @@ const CheckoutPage = () => {
 
   const handleNext = async () => {
     if (step === 2) {
-      const isStepValid = await trigger(["email", "phoneNumber", "adress"]);
+      const isStepValid = await trigger(["email", "phoneNumber", "address"]);
       if (isStepValid) setStep(3);
     } else {
       setStep(step + 1);

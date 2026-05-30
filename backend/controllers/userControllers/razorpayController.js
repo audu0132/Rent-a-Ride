@@ -10,6 +10,16 @@ export const createRazorpayOrder = async (req, res) => {
     });
   }
   try {
+
+    // ✅ ADD THIS CHECK HERE ↓
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
+      return res.status(500).json({
+        success: false,
+        message: "Razorpay keys not configured on server"
+      });
+    }
+
+
     console.log("✅ Razorpay route hit");
     console.log("Body:", req.body);
     console.log("User:", req.user);

@@ -1,7 +1,10 @@
 import axios from "axios";
 
 export const API = axios.create({
-  baseURL: (import.meta.env.VITE_API_BASE_URL || "https://rent-a-ride-ufjq.onrender.com") + "/api",
+  baseURL: (import.meta.env.VITE_API_BASE_URL || 
+    (import.meta.env.MODE === "development"
+      ? "http://localhost:5000"
+      : "https://rent-a-ride-ufjq.onrender.com")) + "/api",
   withCredentials: true,
 });
 
@@ -21,7 +24,16 @@ API.interceptors.request.use(
 
 API.interceptors.response.use(
   (response) => response,
-  (error) => Promise.reject(error)
+  (error) => {
+    if (error.response && error.response.status === 403) {
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      setTimeout(() => {
+        window.location.href = "/signin";
+      }, 1500);
+    }
+    return Promise.reject(error);
+  }
 );
 
 export const navLinks = [
