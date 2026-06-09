@@ -41,9 +41,9 @@ export default function Orders() {
     fetchBookings();
   }, []);
 
-  const handleDetailsModal = (bookingDetails, vehicleDetails) => {
+  const handleDetailsModal = (order) => {
     dispatch(setIsOrderModalOpen(true));
-    dispatch(setSingleOrderDetails(bookingDetails, vehicleDetails));
+    dispatch(setSingleOrderDetails(order));
   };
 
   const containerVariants = {
