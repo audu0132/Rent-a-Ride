@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Link, useNavigate } from "react-router-dom";
 import { showVehicles } from "../../redux/user/listAllVehicleSlice";
 import { setBasicBookingDetails } from "../../redux/user/BookingDataSlice";
-import API_BASE_URL from "../../config/api";
+import { API } from "../../constants";
 
 // Icons
 import { 
@@ -32,24 +32,17 @@ const VehicleDetails = () => {
   const [activeImage, setActiveImage] = useState(0);
   const [selectedDates, setSelectedDates] = useState({ start: "", end: "" });
   const [pickupLocation, setPickupLocation] = useState("Main Showroom, MG Road");
-
-  let refreshToken = localStorage.getItem("refreshToken");
-  let accessToken = localStorage.getItem('accessToken');
-
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(`${API_BASE_URL}/api/user/listAllVehicles`, {
-          headers: { "Authorization": `Bearer ${refreshToken},${accessToken}` },
-        });
-        const data = await res.json();
-        dispatch(showVehicles(data));
+        const res = await API.get("/user/listAllVehicles");
+        dispatch(showVehicles(res.data));
       } catch (error) {
         console.log(error);
       }
     };
     fetchData();
-  }, [dispatch, refreshToken, accessToken]);
+  }, [dispatch]);
 
   if (!singleVehicleDetail) return null;
 

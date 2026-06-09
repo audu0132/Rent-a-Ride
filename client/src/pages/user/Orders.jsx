@@ -81,48 +81,50 @@ export default function Orders() {
         className="space-y-6"
       >
         {bookings && bookings.length > 0 ? (
-          bookings.map((cur, idx) => {
-            const rawPickup = cur.bookingDetails.pickupDate;
-            const rawDropoff = cur.bookingDetails.dropOffDate;
-            const validPickup = rawPickup && !isNaN(new Date(rawPickup).getTime());
-            const validDropoff = rawDropoff && !isNaN(new Date(rawDropoff).getTime());
-            const pickupDate = validPickup ? new Date(rawPickup) : null;
-            const dropoffDate = validDropoff ? new Date(rawDropoff) : null;
+          bookings
+            .filter((cur) => cur && cur.vehicleDetails && cur.bookingDetails)
+            .map((cur, idx) => {
+              const rawPickup = cur.bookingDetails.pickupDate;
+              const rawDropoff = cur.bookingDetails.dropOffDate;
+              const validPickup = rawPickup && !isNaN(new Date(rawPickup).getTime());
+              const validDropoff = rawDropoff && !isNaN(new Date(rawDropoff).getTime());
+              const pickupDate = validPickup ? new Date(rawPickup) : null;
+              const dropoffDate = validDropoff ? new Date(rawDropoff) : null;
 
-            return (
-              <motion.div
-                key={idx}
-                variants={cardVariants}
-                whileHover={{ y: -5 }}
-                className="group relative overflow-hidden rounded-[2rem] border border-white/5 bg-slate-900/40 p-1 backdrop-blur-md transition-all hover:border-emerald-500/20 hover:shadow-2xl hover:shadow-emerald-500/5"
-              >
-                <div className="flex flex-col md:flex-row gap-8 rounded-[1.8rem] bg-slate-950/20 p-6 sm:p-8">
-                  {/* Vehicle Visual */}
-                  <div className="relative h-48 w-full shrink-0 overflow-hidden rounded-2xl md:h-auto md:w-64">
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent z-10" />
-                    <img
-                      src={cur.vehicleDetails.image[0]}
-                      alt={cur.vehicleDetails.name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
-                    />
-                    <div className="absolute bottom-3 left-3 z-20">
-                       <span className="rounded-lg bg-emerald-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20">
-                          Confirmed
-                       </span>
+              return (
+                <motion.div
+                  key={idx}
+                  variants={cardVariants}
+                  whileHover={{ y: -5 }}
+                  className="group relative overflow-hidden rounded-[2rem] border border-white/5 bg-slate-900/40 p-1 backdrop-blur-md transition-all hover:border-emerald-500/20 hover:shadow-2xl hover:shadow-emerald-500/5"
+                >
+                  <div className="flex flex-col md:flex-row gap-8 rounded-[1.8rem] bg-slate-950/20 p-6 sm:p-8">
+                    {/* Vehicle Visual */}
+                    <div className="relative h-48 w-full shrink-0 overflow-hidden rounded-2xl md:h-auto md:w-64">
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-950/80 to-transparent z-10" />
+                      <img
+                        src={cur.vehicleDetails?.image?.[0] || ""}
+                        alt={cur.vehicleDetails?.name || "Vehicle"}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-110"
+                      />
+                      <div className="absolute bottom-3 left-3 z-20">
+                         <span className="rounded-lg bg-emerald-500 px-3 py-1 text-[10px] font-black uppercase tracking-widest text-white shadow-lg shadow-emerald-500/20">
+                            Confirmed
+                         </span>
+                      </div>
                     </div>
-                  </div>
 
-                  {/* Booking Details */}
-                  <div className="flex flex-1 flex-col justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-start justify-between gap-4">
-                        <div>
-                          <h3 className="text-xl font-bold text-white group-hover:text-emerald-500 transition-colors uppercase tracking-tight">
-                            {cur.vehicleDetails.name}
-                          </h3>
-                          <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em] mt-1">
-                            Ref: {cur.bookingDetails._id?.slice(-8)}
-                          </p>
+                    {/* Booking Details */}
+                    <div className="flex flex-1 flex-col justify-between">
+                      <div>
+                        <div className="flex flex-wrap items-start justify-between gap-4">
+                          <div>
+                            <h3 className="text-xl font-bold text-white group-hover:text-emerald-500 transition-colors uppercase tracking-tight">
+                              {cur.vehicleDetails?.name || "Vehicle"}
+                            </h3>
+                            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-[0.2em] mt-1">
+                              Ref: {cur.bookingDetails._id?.slice(-8)}
+                            </p>
                         </div>
                         <div className="flex items-center gap-1 rounded-xl bg-white/5 px-4 py-2 border border-white/5 text-emerald-500">
                           <HiOutlineCurrencyRupee size={18} />

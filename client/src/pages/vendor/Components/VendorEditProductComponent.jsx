@@ -12,7 +12,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import dayjs from "dayjs";
 import { toast } from "react-hot-toast";
 import { setVendorEditSuccess } from "../../../redux/vendor/vendorDashboardSlice";
-import API_BASE_URL from "../../../config/api";
+import { API } from "../../../constants";
 
 export default function VendorEditProductComponent() {
   const dispatch = useDispatch();
@@ -51,30 +51,18 @@ export default function VendorEditProductComponent() {
       if (editData && vehicle_id) {
         tostID = toast.loading("saving...", { position: "bottom-center" });
         const formData = editData;
-        const res = await fetch(
-          `${API_BASE_URL}/api/vendor/vendorEditVehicles/${vehicle_id}`,
-          {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ formData }),
-          }
-        );
+        await API.put(`/vendor/vendorEditVehicles/${vehicle_id}`, { formData });
 
-        if (!res.ok) {
-          toast.error("error");
-          toast.dismiss(tostID);
-        }
-
-        if (res.ok) {
-          toast.dismiss(tostID);
-          dispatch(setVendorEditSuccess(true));
-        }
+        toast.dismiss(tostID);
+        dispatch(setVendorEditSuccess(true));
       }
       reset();
     } catch (error) {
       console.log(error);
+      if (tostID) {
+        toast.dismiss(tostID);
+      }
+      toast.error("Error updating vehicle");
     }
     navigate("/vendorDashboard/vendorAddProduct");
   };

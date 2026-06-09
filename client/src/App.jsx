@@ -63,6 +63,7 @@ function App() {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           <Route path="/adminHome" element={<Navigate to="/adminDashboard/adminHome" replace />} />
+          <Route path="/admin" element={<Navigate to="/adminDashboard" replace />} />
           <Route path="*" element={<CarNotFound />} />
           
           <Route element={<With_nav />}>

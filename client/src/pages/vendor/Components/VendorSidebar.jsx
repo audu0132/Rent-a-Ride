@@ -3,7 +3,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiX, HiOutlineLogout } from "react-icons/hi";
 import { SiShopware } from "react-icons/si";
-import API_BASE_URL from "../../../config/api";
+import { API } from "../../../constants";
 
 // Redux
 import { signOut } from "../../../redux/user/userSlice.jsx";
@@ -19,13 +19,18 @@ const VendorSidebar = () => {
 
   const handleSignout = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/signout`, { method: "GET" });
-      if (res.ok) {
-        dispatch(signOut());
-        navigate("/signin");
-      }
+      await API.get("/admin/signout");
+      dispatch(signOut());
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      navigate("/signin");
     } catch (error) {
       console.error("Signout failed:", error);
+      // Fallback signout on failure
+      dispatch(signOut());
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("refreshToken");
+      navigate("/signin");
     }
   };
 

@@ -1,7 +1,7 @@
 import {  useLocation, useNavigate } from "react-router-dom";
 import { useDispatch } from "react-redux";
 import { setVendorDeleteSuccess } from "../../../redux/vendor/vendorDashboardSlice";
-import API_BASE_URL from "../../../config/api";
+import { API } from "../../../constants";
 
 const VendorDeleteVehicleModal = () => {
   const location = useLocation();
@@ -15,21 +15,13 @@ const VendorDeleteVehicleModal = () => {
    //delete a vehicle
  const vendorHandleDelete = async () => {
     try{
-      const res = await fetch(`${API_BASE_URL}/api/vendor/vendorDeleteVehicles/${vehicle_id}`, {
-        method: "DELETE"
-      })
-      if(!res.ok){
-        console.log("soemthing went wrong")
-        return 
-      }
-      if (res.ok) {
-        dispatch(setVendorDeleteSuccess(true))
-        }
-      }
-      catch (error) {
-        console.log(error);
-      }
+      await API.delete(`/vendor/vendorDeleteVehicles/${vehicle_id}`);
+      dispatch(setVendorDeleteSuccess(true));
     }
+    catch (error) {
+      console.log("Delete failed:", error);
+    }
+  };
    
   
 

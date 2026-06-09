@@ -2,9 +2,9 @@ import { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlineInformationCircle, HiOutlineCurrencyRupee, HiOutlineStatusOnline } from "react-icons/hi";
-import VendorBookingDetailModal from "./VendorBookingModal";
 import { setVendorOrderModalOpen, setVendorSingleOrderDetails } from "../../../redux/vendor/vendorBookingSlice";
-import API_BASE_URL from "../../../config/api";
+import VendorBookingDetailModal from "./VendorBookingModal";
+import { API } from "../../../constants";
 
 const VendorBookingTable = () => {
   const [bookings, setBookings] = useState([]);
@@ -21,15 +21,8 @@ const VendorBookingTable = () => {
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/vendor/showVendorVehilces`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ _id }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setVendorVehicles(data || []);
-      }
+      const res = await API.post("/vendor/showVendorVehilces", { _id });
+      setVendorVehicles(res.data || []);
     } catch (error) {
       console.error("Vendor vehicles fetch failed:", error);
     }
@@ -37,12 +30,8 @@ const VendorBookingTable = () => {
 
   const fetchBookings = async () => {
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/allBookings`, {
-        method: "GET",
-        headers: { "Content-Type": "application/json" },
-      });
-      const data = await res.json();
-      if (data) setBookings(data);
+      const res = await API.get("/admin/allBookings");
+      if (res.data) setBookings(res.data);
     } catch (error) {
       console.error("Bookings fetch failed:", error);
     } finally {
@@ -66,12 +55,8 @@ const VendorBookingTable = () => {
   const handleStatusChange = async (e, bookingId) => {
     const newStatus = e.target.value;
     try {
-      const res = await fetch(`${API_BASE_URL}/api/admin/changeStatus`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ id: bookingId, status: newStatus }),
-      });
-      if (res.ok) fetchBookings();
+      await API.post("/admin/changeStatus", { id: bookingId, status: newStatus });
+      fetchBookings();
     } catch (error) {
       console.error("Status change failed:", error);
     }

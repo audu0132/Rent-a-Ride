@@ -10,21 +10,95 @@ export const API = axios.create({
 
 API.interceptors.request.use(
   (config) => {
-    const refreshToken = localStorage.getItem("refreshToken");
     const accessToken = localStorage.getItem("accessToken");
-
-    if (refreshToken || accessToken) {
-      config.headers.Authorization = `Bearer ${refreshToken || ""},${accessToken || ""}`;
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
     }
-
     return config;
   },
   (error) => Promise.reject(error)
 );
 
+let isRefreshing = false;
+let failedRequestsQueue = [];
+
+const processQueue = (error, token = null) => {
+  failedRequestsQueue.forEach((prom) => {
+    if (error) {
+      prom.reject(error);
+    } else {
+      prom.resolve(token);
+    }
+  });
+  failedRequestsQueue = [];
+};
+
 API.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+
+    if (
+      error.response &&
+      (error.response.status === 401 || (error.response.data && error.response.data.code === "ACCESS_TOKEN_EXPIRED")) &&
+      !originalRequest._retry
+    ) {
+      if (isRefreshing) {
+        return new Promise((resolve, reject) => {
+          failedRequestsQueue.push({ resolve, reject });
+        })
+          .then((token) => {
+            originalRequest.headers.Authorization = `Bearer ${token}`;
+            return API(originalRequest);
+          })
+          .catch((err) => Promise.reject(err));
+      }
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = localStorage.getItem("refreshToken");
+      if (!refreshToken) {
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        window.location.href = "/signin";
+        return Promise.reject(error);
+      }
+
+      try {
+        const res = await axios.post(
+          (import.meta.env.VITE_API_BASE_URL || 
+            (import.meta.env.MODE === "development"
+              ? "http://localhost:5000"
+              : "https://rent-a-ride-ufjq.onrender.com")) + "/api/auth/refreshToken",
+          { refreshToken }
+        );
+
+        if (res.data && res.data.accessToken) {
+          const newAccessToken = res.data.accessToken;
+          const newRefreshToken = res.data.refreshToken;
+
+          localStorage.setItem("accessToken", newAccessToken);
+          localStorage.setItem("refreshToken", newRefreshToken);
+
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          processQueue(null, newAccessToken);
+
+          return API(originalRequest);
+        } else {
+          throw new Error("Invalid token refresh response");
+        }
+      } catch (refreshError) {
+        processQueue(refreshError, null);
+        localStorage.removeItem("accessToken");
+        localStorage.removeItem("refreshToken");
+        window.location.href = "/signin";
+        return Promise.reject(refreshError);
+      } finally {
+        isRefreshing = false;
+      }
+    }
+
     if (error.response && error.response.status === 403) {
       localStorage.removeItem("accessToken");
       localStorage.removeItem("refreshToken");

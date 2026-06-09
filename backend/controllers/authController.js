@@ -99,21 +99,28 @@ export const signIn = async (req, res, next) => {
 // ================= REFRESH TOKEN =================
 export const refreshToken = async (req, res, next) => {
   try {
-    if (!req.headers.authorization) {
-      return next(errorHandler(403, "No header provided"));
+    let token = req.body?.refreshToken;
+    if (!token && req.headers.authorization) {
+      const parts = req.headers.authorization.split(" ");
+      if (parts[0] === "Bearer" && parts[1]) {
+        token = parts[1].split(",")[0];
+      }
     }
 
-    const tokenData = req.headers.authorization.split(" ")[1];
-    const refreshToken = tokenData.split(",")[0];
-
-    if (!refreshToken) {
-      return next(errorHandler(401, "Not authenticated"));
+    if (!token) {
+      return res.status(401).json({ success: false, message: "Refresh token is missing" });
     }
 
-    const decoded = Jwt.verify(refreshToken, process.env.REFRESH_TOKEN);
+    const decoded = Jwt.verify(token, process.env.REFRESH_TOKEN);
     const user = await User.findById(decoded.id);
 
-    if (!user) return next(errorHandler(403, "Invalid token"));
+    if (!user) {
+      return res.status(403).json({ success: false, message: "User not found" });
+    }
+
+    if (user.refreshToken !== token) {
+      return res.status(403).json({ success: false, message: "Invalid refresh token" });
+    }
 
     const newAccessToken = Jwt.sign(
       { id: user._id },
@@ -131,13 +138,13 @@ export const refreshToken = async (req, res, next) => {
       refreshToken: newRefreshToken,
     });
 
-    res.status(200).json({
+    return res.status(200).json({
       accessToken: newAccessToken,
       refreshToken: newRefreshToken,
     });
   } catch (error) {
     console.log("REFRESH ERROR:", error);
-    next(error);
+    return res.status(403).json({ success: false, message: "Invalid or expired refresh token" });
   }
 };
 

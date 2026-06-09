@@ -4,7 +4,7 @@ import {
   setisPaymentDone,
 } from "../../redux/user/LatestBookingsSlice";
 import { setIsSweetAlert, setPageLoading } from "../../redux/user/userSlice";
-import API_BASE_URL from "../../config/api";
+import { API } from "../../constants";
 
 export function loadScript(src) {
   return new Promise((resolve) => {
@@ -21,22 +21,8 @@ export function loadScript(src) {
 
 export const fetchLatestBooking = async (user_id, dispatch) => {
   try {
-    const accessToken = localStorage.getItem("accessToken");
-
-    const response = await fetch(`${API_BASE_URL}/api/user/latestbookings`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken || ""}`,
-      },
-      body: JSON.stringify({ user_id }),
-    });
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch latest booking");
-    }
-
-    const data = await response.json();
+    const response = await API.post("/user/latestbookings", { user_id });
+    const data = response.data;
     dispatch(setLatestBooking(data));
     dispatch(setisPaymentDone(true));
     return data;
@@ -54,7 +40,6 @@ export const displayRazorpay = async (orderData, navigate, dispatch) => {
     console.log("Starting Razorpay...");
 
     const accessToken = localStorage.getItem("accessToken");
-
     if (!accessToken) {
       toast.error("Login session expired. Please login again.");
       return { success: false, message: "Access token missing" };
@@ -69,34 +54,13 @@ export const displayRazorpay = async (orderData, navigate, dispatch) => {
       return { success: false, message: "Razorpay SDK failed to load" };
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/user/razorpay`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(orderData),
+    const response = await API.post("/user/razorpay", orderData, {
       signal: controller.signal,
     });
 
     clearTimeout(timeoutId);
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      const msg =
-        errorData?.message || `Failed to create Razorpay order (${response.status})`;
-      toast.error(msg);
-      if (response.status === 403) {
-        localStorage.removeItem("accessToken");
-        localStorage.removeItem("refreshToken");
-        setTimeout(() => {
-          window.location.href = "/signin";
-        }, 1500);
-      }
-      return { success: false, message: msg };
-    }
-
-    const data = await response.json();
+    const data = response.data;
     console.log("Order API response:", data);
 
     if (!data || !data.id) {
@@ -124,25 +88,7 @@ export const displayRazorpay = async (orderData, navigate, dispatch) => {
               razorpaySignature: paymentResponse.razorpay_signature,
             };
 
-            const bookRes = await fetch(`${API_BASE_URL}/api/user/bookCar`, {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${accessToken}`,
-              },
-              body: JSON.stringify(bookingPayload),
-            });
-
-            if (!bookRes.ok) {
-              if (bookRes.status === 403) {
-                localStorage.removeItem("accessToken");
-                localStorage.removeItem("refreshToken");
-                setTimeout(() => {
-                  window.location.href = "/signin";
-                }, 1500);
-              }
-              throw new Error("Payment done, but booking save failed.");
-            }
+            await API.post("/user/bookCar", bookingPayload);
 
             toast.success("Payment successful!");
 
@@ -157,8 +103,10 @@ export const displayRazorpay = async (orderData, navigate, dispatch) => {
             resolve({ success: true, message: "Payment successful" });
           } catch (error) {
             console.error("Post-payment error:", error);
-            toast.error(error.message || "Payment done, but booking update failed.");
-            resolve({ success: false, message: error.message });
+            const errorData = error.response?.data;
+            const errorMsg = errorData?.message || error.message || "Payment done, but booking update failed.";
+            toast.error(errorMsg);
+            resolve({ success: false, message: errorMsg });
           } finally {
             dispatch(setPageLoading(false));
           }
@@ -185,9 +133,9 @@ export const displayRazorpay = async (orderData, navigate, dispatch) => {
 
       const paymentObject = new window.Razorpay(options);
 
-      paymentObject.on("payment.failed", function (response) {
-        console.error("Payment Failed:", response.error);
-        toast.error(response?.error?.description || "Payment failed");
+      paymentObject.on("payment.failed", function (res) {
+        console.error("Payment Failed:", res.error);
+        toast.error(res?.error?.description || "Payment failed");
         dispatch(setPageLoading(false));
         resolve({ success: false, message: "Payment failed" });
       });
@@ -197,10 +145,11 @@ export const displayRazorpay = async (orderData, navigate, dispatch) => {
   } catch (error) {
     clearTimeout(timeoutId);
 
+    const errorData = error.response?.data;
     const msg =
       error.name === "AbortError"
         ? "Backend is taking too long. Please try again."
-        : error.message || "Something went wrong during payment";
+        : errorData?.message || error.message || "Something went wrong during payment";
 
     console.error("Razorpay Error:", error);
     toast.error(msg);

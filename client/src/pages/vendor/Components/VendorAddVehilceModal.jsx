@@ -12,7 +12,7 @@ import {
   HiOutlineChevronRight
 } from "react-icons/hi";
 import useFetchLocationsLov from "../../../hooks/useFetchLocationsLov";
-import API_BASE_URL from "../../../config/api";
+import { API } from "../../../constants";
 
 const VendorAddProductModal = () => {
   const { register, handleSubmit, reset, formState: { errors } } = useForm();
@@ -75,18 +75,11 @@ const VendorAddProductModal = () => {
       formData.append("district", addData.vehicleDistrict);
       formData.append("addedBy", _id);
 
-      const res = await fetch(`${API_BASE_URL}/api/vendor/vendorAddVehicle`, {
-        method: "POST",
-        body: formData,
-      });
+      await API.post("/vendor/vendorAddVehicle", formData);
 
-      if (res.ok) {
-        toast.success("Listing deployed to orbital admin for approval!", { id: toastId });
-        reset();
-        setTimeout(() => handleClose(), 1500);
-      } else {
-        toast.error("Telemetry failed. Overide denied.", { id: toastId });
-      }
+      toast.success("Listing deployed to orbital admin for approval!", { id: toastId });
+      reset();
+      setTimeout(() => handleClose(), 1500);
     } catch (error) {
       console.error(error);
       toast.error("Critical failure during transmission.");

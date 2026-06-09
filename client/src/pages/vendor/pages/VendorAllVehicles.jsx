@@ -4,9 +4,7 @@ import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { HiOutlinePencilAlt, HiOutlineTrash, HiOutlinePlus, HiCheckCircle, HiClock, HiXCircle } from "react-icons/hi";
 import toast, { Toaster } from "react-hot-toast";
-import API_BASE_URL from "../../../config/api";
-
-// Redux
+import { API } from "../../../constants";
 import {
   setVendorDeleteSuccess,
   setVendorEditSuccess,
@@ -28,15 +26,8 @@ const VendorAllVehicles = () => {
   const fetchVendorVehicles = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE_URL}/api/vendor/showVendorVehilces`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ _id }),
-      });
-      if (res.ok) {
-        const data = await res.json();
-        dispatch(setVenodrVehilces(data));
-      }
+      const res = await API.post("/vendor/showVendorVehilces", { _id });
+      dispatch(setVenodrVehilces(res.data));
     } catch (error) {
       console.error("Fetch failed:", error);
     } finally {
